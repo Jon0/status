@@ -3,8 +3,14 @@ import System.IO
 
 main :: IO ()
 main = do
+    args <- getArgs
+    progName <- getProgName
+    putStrLn ("The program name is: " ++ progName)
+    putStrLn "The arguments are:"
+    mapM putStrLn args
+    putStrLn "Enter a string:"
     s <- get_string
-    putStr s
+    putStr (s ++ "\n")
     hGetChar stdin
     putStr "hello\n"
 
