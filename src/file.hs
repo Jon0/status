@@ -15,3 +15,9 @@ read_file = do
     putStr numberString
     hClose handle
     hClose tempHandle
+
+parse_file :: String -> String
+parse_file filename = do
+    handle <- openFile filename ReadMode
+    contents <- hGetContents handle
+    return contents
