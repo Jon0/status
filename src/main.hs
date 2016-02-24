@@ -1,18 +1,20 @@
 import System.Environment
 import System.IO
+import Server
 
-main :: IO ()
-main = do
+print_args :: IO [()]
+print_args = do
     args <- getArgs
     progName <- getProgName
     putStrLn ("The program name is: " ++ progName)
     putStrLn "The arguments are:"
     mapM putStrLn args
-    putStrLn "Enter a string:"
-    s <- get_string
-    putStr (s ++ "\n")
-    hGetChar stdin
-    putStr "hello\n"
+
+
+
+main :: IO ()
+main = do
+    putStrLn "test"
 
 get_string :: IO String
 get_string = do
@@ -38,3 +40,10 @@ main_loop loop_state = do {
     --else main_loop new_loop_state
     return some_state;
 }
+
+io_test = do
+    putStrLn "Enter a string:"
+    s <- get_string
+    putStr (s ++ "\n")
+    hGetChar stdin
+    putStr "hello\n"
