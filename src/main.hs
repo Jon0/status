@@ -14,7 +14,7 @@ print_args = do
 
 main :: IO ()
 main = do
-    putStrLn "test"
+    accept_loop
 
 get_string :: IO String
 get_string = do
