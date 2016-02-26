@@ -3,6 +3,14 @@ module Route where
 import Network.Stream
 import Network.HTTP
 
+
+--
+data Test = Sometype Int | B Bool
+
+test_fn :: Test
+test_fn = Sometype 0
+
+
 req_handler :: Request String -> (String, Bool)
 req_handler request = ("test", True)
 
@@ -16,5 +24,3 @@ read_request str = do
     --        (response, done) <- req_handler request
     --        return response
     return "."
-
-lol = sum [1,2..]
