@@ -31,6 +31,8 @@ respond :: (Socket, SockAddr) -> IO ()
 respond (sock, _) = do
     hdl <- socketToHandle sock ReadWriteMode
     hSetBuffering hdl NoBuffering
+    inpStr <- hGetLine hdl
+    putStrLn inpStr
     hPutStrLn hdl "HTTP/1.1 200 OK";
     hPutStrLn hdl "Content-Length: 6";
     hPutStrLn hdl ""

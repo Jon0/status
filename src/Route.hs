@@ -1,8 +1,17 @@
 module Route where
 
+import System.IO
 import Network.Socket
 import Network.Stream
 import Network.HTTP
+
+
+
+replyFn :: Handle -> IO ()
+replyFn hdl = do
+    inpStr <- hGetLine hdl
+    putStrLn inpStr
+    hPutStrLn hdl "HTTP/1.1 200 OK";
 
 
 --
