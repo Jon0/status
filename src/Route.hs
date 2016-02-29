@@ -6,13 +6,33 @@ import Network.Stream
 import Network.HTTP
 
 
+element :: Int -> [a] -> Maybe a
+element index array
+    | index < length array = Just $ array !! index
+    | otherwise = Nothing
+
+
+response_header :: String -> String
+response_header content = ("HTTP/1.1 200 OK\nContent-Length: " ++ (show (length content)) ++ "\n\n")
+
+
+
+get_location :: String -> IO String
+get_location f = do
+    content <- readFile ("." ++ f ++ "content/index.html")
+    return (response_header content ++ content)
+
 
 replyFn :: Handle -> IO ()
 replyFn hdl = do
     inpStr <- hGetLine hdl
-    putStrLn inpStr
-    hPutStrLn hdl "HTTP/1.1 200 OK";
-
+    print $ words inpStr
+    case element 1 (words inpStr) of
+        Nothing -> do
+            hPutStrLn hdl "HTTP/1.1 404 Not Found";
+        Just a -> do
+            response <- get_location a
+            hPutStrLn hdl response
 
 --
 data Test = Sometype Int | B Bool
@@ -39,7 +59,7 @@ read_request s = do return "test"
     --        (response, done) <- req_handler request
     --        return response
     --return "."
-read_request _ = do return "..."
+--read_request _ = do return "..."
 
 read_requests :: HandleStream Socket -> IO String
 read_requests sock = do
