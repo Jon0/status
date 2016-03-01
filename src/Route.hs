@@ -4,7 +4,7 @@ import System.IO
 import Network.Socket
 import Network.Stream
 import Network.HTTP
-
+import File
 
 element :: Int -> [a] -> Maybe a
 element index array
@@ -16,10 +16,9 @@ response_header :: String -> String
 response_header content = ("HTTP/1.1 200 OK\nContent-Length: " ++ (show (length content)) ++ "\n\n")
 
 
-
 get_location :: String -> IO String
 get_location f = do
-    content <- readFile ("." ++ f ++ "content/index.html")
+    content <- getMainPage
     return (response_header content ++ content)
 
 
