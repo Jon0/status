@@ -3,6 +3,12 @@ module Html where
 class Element e where
     toHtml :: e -> String
 
+
+data Showable = forall a . Element a => MkElement a
+
+pack :: Element a => a -> Showable
+pack = MkElement
+
 -- generate :: String -> [Element]
 
 
@@ -23,6 +29,10 @@ createHead s = ("<head><title>" ++ s ++ "</title></head>")
 createBody :: String -> String
 createBody s = "<body>" ++ s ++ "</body>"
 
-createPage :: String -> String
-createPage s = let e = [Hd 4 "Test", Hd 4 "123"] in
-    "<!DOCTYPE html><html>" ++ createHead s ++ createBody (showElem e) ++ "</html>"
+createPage :: String -> String -> String
+createPage name content = let e = [Hd 4 "Test", Hd 4 "123"] in
+    "<!DOCTYPE html><html>" ++ createHead name ++ createBody (showElem e) ++ "</html>"
+
+
+template :: String -> [Showable]
+template content = [pack (Hd 4 "Test"), pack (Hd 4 "123")]

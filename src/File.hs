@@ -21,10 +21,13 @@ getHostname :: IO String
 getHostname = parse_file "/etc/hostname"
 
 
-showDirectory :: String -> IO String
-showDirectory s = do return "..."
+showDirectory :: FilePath -> IO String
+showDirectory path = do
+    content <- getDirectoryContents path
+    return $ concat content
 
 getMainPage :: IO String
 getMainPage = do
     name <- getHostname
-    return $ createPage name
+    dir <- showDirectory "/"
+    return $ createPage name dir
