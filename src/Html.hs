@@ -4,12 +4,24 @@ class Element e where
     toHtml :: e -> String
 
 
+-- allow generic types of element
 data Showable = forall a . Element a => MkElement a
 
 pack :: Element a => a -> Showable
 pack = MkElement
 
--- generate :: String -> [Element]
+
+data HtmlDocument = HtmlDocument HtmlHeader [Showable]
+
+instance Element HtmlDocument where
+    toHtml (HtmlDocument header objects) = ""
+
+
+-- header type
+data HtmlHeader = HtmlHeader String
+
+instance Element HtmlHeader where
+    toHtml (HtmlHeader s) = ("<head><title>" ++ s ++ "</title></head>")
 
 
 data Heading = Hd Int String
@@ -30,9 +42,14 @@ createBody :: String -> String
 createBody s = "<body>" ++ s ++ "</body>"
 
 createPage :: String -> String -> String
-createPage name content = let e = [Hd 4 "Test", Hd 4 "123"] in
+createPage name content = "<!DOCTYPE html><html>" ++ createHead name ++ createBody content ++ "</html>"
+
+
+createPage2 :: String -> String -> String
+createPage2 name content = let e = [Hd 4 "Test", Hd 4 "123"] in
     "<!DOCTYPE html><html>" ++ createHead name ++ createBody (showElem e) ++ "</html>"
 
 
+-- generate :: String -> [Element]
 template :: String -> [Showable]
 template content = [pack (Hd 4 "Test"), pack (Hd 4 "123")]

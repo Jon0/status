@@ -3,7 +3,6 @@ module File where
 import System.IO
 import System.Directory
 import Data.List
-import Html
 
 --tz contents = do
 --    let list = lines contents
@@ -21,13 +20,7 @@ getHostname :: IO String
 getHostname = parse_file "/etc/hostname"
 
 
-showDirectory :: FilePath -> IO String
+showDirectory :: FilePath -> IO [String]
 showDirectory path = do
     content <- getDirectoryContents path
-    return $ concat content
-
-getMainPage :: IO String
-getMainPage = do
-    name <- getHostname
-    dir <- showDirectory "/"
-    return $ createPage name dir
+    return $ content

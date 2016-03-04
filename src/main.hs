@@ -1,5 +1,6 @@
 import System.Environment
 import System.IO
+import Route
 import Server
 
 print_args :: IO [()]
@@ -11,10 +12,9 @@ print_args = do
     mapM putStrLn args
 
 
-
 main :: IO ()
 main = do
-    accept_loop
+    accept_loop replyFn
 
 get_string :: IO String
 get_string = do
