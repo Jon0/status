@@ -7,6 +7,10 @@ import File
 import Html
 import Template
 
+
+data RouteData = RouteData { url :: String }
+
+
 element :: Int -> [a] -> Maybe a
 element index array
     | index < length array = Just $ array !! index
@@ -23,16 +27,29 @@ getLocation path = do
     return (response_header content ++ content)
 
 
+deviceTable :: IO String
+deviceTable = do
+    dir <- showDirectory "/"
+    dev <- updateDevices
+    return $ toHtmlTable (toDeviceTable dev)
+
+
+-- read paths from a file
+readRoute :: String -> IO RouteData
+readRoute url = do
+    return $ RouteData url
+
+
 getPage :: String -> IO String
 getPage path = do
     name <- getHostname
     if path  == "/" then do
-        dir <- showDirectory "/"
-        device <- updateDevices
-        return $ createPage name (toHtmlTable (toDeviceTable device))
+        dev <- deviceTable
+        return $ createPage name dev
     else do
         dat <- loadPackageData path "statfile"
         return $ createPage name (toHtmlTable (toStorageTable dat))
+
 
 replyFn :: Handle -> IO ()
 replyFn hdl = do

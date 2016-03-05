@@ -6,7 +6,7 @@ import Data.List
 
 
 data Package = Package { pkgName :: String, pkgFiles :: [FilePath] }
-data Storage = Storage { mountPoint :: FilePath, pkgData :: Package }
+data Storage = Storage { mountPoint :: FilePath, pkgData :: [Package] }
 
 
 --tz contents = do
@@ -14,22 +14,27 @@ data Storage = Storage { mountPoint :: FilePath, pkgData :: Package }
 --        return $ zipWith () [0..] list
 
 
-lineToStorage :: String -> Storage
-lineToStorage line = let w = (words line) in
-    Storage (w !! 0) (Package (w !! 1) [])
-
-storageToStrings :: Storage -> [String]
-storageToStrings st = [(mountPoint st), (pkgName (pkgData st))]
+lineToPackage :: String -> Package
+lineToPackage line = let (w:ws) = (words line) in
+    Package w ws
 
 
-loadPackageData :: String -> String -> IO [Storage]
+packageToStrings :: Package -> [String]
+packageToStrings p = (pkgName p) : (pkgFiles p)
+
+
+storageToStrings :: Storage -> [[String]]
+storageToStrings st = (map packageToStrings (pkgData st))
+
+
+loadPackageData :: String -> String -> IO Storage
 loadPackageData mount datafile = do
     content <- fileContent (mount ++ "/" ++ datafile)
-    return $ map lineToStorage (lines content)
+    return $ Storage mount (map lineToPackage (lines content))
 
 
-toStorageTable :: [Storage] -> [[String]]
-toStorageTable st = map storageToStrings st
+toStorageTable :: Storage -> [[String]]
+toStorageTable st = [[(mountPoint st), "files"]] ++ (storageToStrings st)
 
 
 fileContent :: FilePath -> IO String
