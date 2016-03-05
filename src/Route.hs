@@ -26,10 +26,13 @@ getLocation path = do
 getPage :: String -> IO String
 getPage path = do
     name <- getHostname
-    dir <- showDirectory "/"
-    device <- updateDevices
-    return $ createPage name (toHtmlTable (toDeviceTable device))
-
+    if path  == "/" then do
+        dir <- showDirectory "/"
+        device <- updateDevices
+        return $ createPage name (toHtmlTable (toDeviceTable device))
+    else do
+        dat <- loadPackageData path "statfile"
+        return $ createPage name (toHtmlTable (toStorageTable dat))
 
 replyFn :: Handle -> IO ()
 replyFn hdl = do

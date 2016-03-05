@@ -3,13 +3,14 @@ import System.IO
 import Route
 import Server
 
-print_args :: IO [()]
+print_args :: IO ()
 print_args = do
     args <- getArgs
     progName <- getProgName
     putStrLn ("The program name is: " ++ progName)
     putStrLn "The arguments are:"
     mapM putStrLn args
+    return ()
 
 
 main :: IO ()
@@ -28,17 +29,15 @@ get_string = do
 finished :: Int -> Bool
 finished i = False
 
-inc_state :: Int -> Int
-inc_state i = i
+incState :: Int -> IO Int
+incState i = do return i
 
-main_loop :: [Int] -> [Int]
-main_loop loop_state = do {
-    some_state <- loop_state;
-    --new_loop_state <- inc_state loop_state;
-    --if finished new_loop_state
-    --then return new_loop_state
-    --else main_loop new_loop_state
-    return some_state;
+mainLoop :: Int -> IO ()
+mainLoop loop_state = do {
+    new_loop_state <- incState loop_state;
+    if finished new_loop_state
+    then return ()
+    else mainLoop new_loop_state
 }
 
 io_test = do

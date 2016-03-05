@@ -37,8 +37,8 @@ toDeviceTable ds = [["maj", "min", "blocks", "name"]] ++ (map toDeviceStrings ds
 
 updateDevices :: IO [Device]
 updateDevices = do
-    prt <- parse_file "/proc/partitions"
-    mnt <- parse_file "/proc/mounts"
+    prt <- fileContent "/proc/partitions"
+    mnt <- fileContent "/proc/mounts"
     return $ toDeviceArray (toFileTable prt)
 
 
