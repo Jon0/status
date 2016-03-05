@@ -2,6 +2,7 @@ module Route where
 
 import System.IO
 import Network.HTTP
+import Device
 import File
 import Html
 import Template
@@ -26,7 +27,8 @@ getPage :: String -> IO String
 getPage path = do
     name <- getHostname
     dir <- showDirectory "/"
-    return $ createPage name (dirTemplate dir)
+    device <- updateDevices
+    return $ createPage name (toHtmlTable (toDeviceTable device))
 
 
 replyFn :: Handle -> IO ()
