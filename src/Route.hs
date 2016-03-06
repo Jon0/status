@@ -10,6 +10,7 @@ import Template
 
 data RouteData = RouteData { url :: String }
 
+
 element :: Int -> [a] -> Maybe a
 element index array
     | index < length array = Just $ array !! index
@@ -23,20 +24,36 @@ packageTable path = do
     return $ toHtmlTable (toStorageTable dat)
 
 
+-- mounts and umounts devices
+queryAction :: Device -> String -> IO ()
+queryAction dev query =
+    if (length query) > 0
+    then
+        if (last query) == '1'
+        then do
+            mountDevice dev "/srv/storage"
+        else do
+            umountDevice "/srv/storage"
+    else do
+        return ()
+
+
 -- use the mount location of the filesystem
 deviceInfo :: String -> String -> IO String
 deviceInfo path query = do
     dev <- updateDevices
     case (findDeviceName dev path) of
-        Just d -> do
-            if (length query) > 0
-            then do
-                mountDevice d "/srv/storage"
-            else do
-                putStrLn $ ""
-            return ("<h3>" ++ (strId d) ++ "</h3>" ++ formStr)
         Nothing -> do
             return "No such device"
+        Just d -> do
+            queryAction d query
+            mnt <- updateMounts
+            let mnt_name = ("/dev/" ++ strId d) in
+                case (findMountName mnt mnt_name) of
+                    Just m -> do
+                        return ("<h3>" ++ mnt_name ++ " (" ++ (mntPath m) ++ ")</h3>" ++ formStr)
+                    Nothing -> do
+                        return ("<h3>" ++ mnt_name ++ " (U)</h3>" ++ formStr)
 
 
 -- match routes by regex from a file

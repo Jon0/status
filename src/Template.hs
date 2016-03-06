@@ -37,6 +37,7 @@ toTableItem name = ("<td>" ++ name ++ "</td>")
 -- example form
 formStr = unlines [
     "<form action=\"\" method=\"get\">",
+    "<button name=\"mount\" value=\"0\">Unmount</button>",
     "<button name=\"mount\" value=\"1\">Mount</button>",
     "</form>"
     ]

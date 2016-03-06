@@ -53,6 +53,7 @@ fileContent2 filename = do
             (\hdl -> do contents <- hGetContents hdl; return contents)
     return $ Just str
 
+
 getHostname :: IO String
 getHostname = fileContent "/etc/hostname"
 

@@ -1,21 +1,26 @@
 module Device where
 
+
 import Data.Maybe
 import System.Process
 import Text.Read
 import File
 
+
 data Device = Device { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
-data Mount = Mount { deviceName :: String, path :: FilePath }
+data Mount = Mount { deviceName :: String, mntPath :: FilePath }
+
 
 concatMaybe :: [Maybe a] -> [a]
 concatMaybe (x:xs) = case x of
     Just a -> a : (concatMaybe xs)
     Nothing -> (concatMaybe xs)
 
+
 -- convert file arrays of lines and words
 toFileTable :: String -> [[String]]
 toFileTable str = map words (lines str)
+
 
 -- order: major, minor, blocks, name
 toDevice :: [String] -> Maybe Device
@@ -41,8 +46,10 @@ findDeviceName (x:xs) s =
 toDeviceStrings :: Device -> [String]
 toDeviceStrings ds = [(show (majorId ds)), (show (minorId ds)), (show (blocks ds)), strId ds]
 
+
 toDeviceTable :: [Device] -> [[String]]
 toDeviceTable ds = [["maj", "min", "blocks", "name"]] ++ (map toDeviceStrings ds)
+
 
 deviceInfoPath :: Device -> FilePath
 deviceInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show (minorId ds)))
@@ -57,7 +64,7 @@ toMountArray dat = map toMount dat
 
 
 toMountStrings :: Mount -> [String]
-toMountStrings m = [(deviceName m), (path m)]
+toMountStrings m = [(deviceName m), (mntPath m)]
 
 -- mounts to table
 toMountTable :: [Mount] -> [[String]]
@@ -76,6 +83,7 @@ updateMounts = do
     return $ toMountArray (toFileTable mnt)
 
 
+-- finding a mount by name
 findMountName :: [Mount] -> String -> Maybe Mount
 findMountName [] _ = Nothing
 findMountName (x:xs) s =
@@ -87,6 +95,15 @@ findMountName (x:xs) s =
 mountDevice :: Device -> FilePath -> IO ()
 mountDevice d p =
     let cmd = ("mount /dev/" ++ strId d ++ " " ++ p) in do
+        putStrLn cmd
+        ps <- runCommand cmd
+        code <- waitForProcess ps
+        putStrLn $ show code
+
+
+umountDevice :: FilePath -> IO ()
+umountDevice p =
+    let cmd = ("umount " ++ p) in do
         putStrLn cmd
         ps <- runCommand cmd
         code <- waitForProcess ps
