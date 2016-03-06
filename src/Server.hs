@@ -4,7 +4,6 @@ import Control.Concurrent
 import System.IO
 import Network.Socket
 
-
 -- socket to listen on a port
 open_socket :: PortNumber -> IO Socket
 open_socket port = do

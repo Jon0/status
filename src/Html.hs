@@ -3,8 +3,10 @@ module Html where
 class Element e where
     toHtml :: e -> String
 
-
 -- allow generic types of element
+data DocContents a
+
+-- or
 data DocContent = forall a . Element a => MkElement a
 
 pack :: Element a => a -> DocContent
