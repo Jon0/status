@@ -92,19 +92,19 @@ findMountName (x:xs) s =
     else findMountName xs s
 
 
+tryCommand :: String -> IO ()
+tryCommand cmd = do
+    putStrLn cmd
+    ps <- runCommand cmd
+    code <- waitForProcess ps
+    putStrLn $ show code
+
+
 mountDevice :: Device -> FilePath -> IO ()
-mountDevice d p =
-    let cmd = ("mount /dev/" ++ strId d ++ " " ++ p) in do
-        putStrLn cmd
-        ps <- runCommand cmd
-        code <- waitForProcess ps
-        putStrLn $ show code
+mountDevice d p = do
+    tryCommand ("mkdir " ++ p)
+    tryCommand ("mount /dev/" ++ strId d ++ " " ++ p)
 
 
 umountDevice :: FilePath -> IO ()
-umountDevice p =
-    let cmd = ("umount " ++ p) in do
-        putStrLn cmd
-        ps <- runCommand cmd
-        code <- waitForProcess ps
-        putStrLn $ show code
+umountDevice p = tryCommand ("umount " ++ p)

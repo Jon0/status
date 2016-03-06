@@ -28,6 +28,10 @@ storageToStrings :: Storage -> [[String]]
 storageToStrings st = (map packageToStrings (pkgData st))
 
 
+storageSize :: Storage -> String
+storageSize st = ((show (length (pkgData st))) ++ " files")
+
+
 loadPackageData :: String -> String -> IO Storage
 loadPackageData mount datafile = do
     content <- fileContent (mount ++ "/" ++ datafile)
@@ -35,7 +39,7 @@ loadPackageData mount datafile = do
 
 
 toStorageTable :: Storage -> [[String]]
-toStorageTable st = [[(mountPoint st), "files"]] ++ (storageToStrings st)
+toStorageTable st = [[(mountPoint st), ("(" ++ (storageSize st) ++ ")")]] ++ (storageToStrings st)
 
 
 -- does the file get closed?

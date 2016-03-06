@@ -7,9 +7,9 @@ class Element e where
 data DocContents a
 
 -- or
-data DocContent = forall a . Element a => MkElement a
+data DocContent = forall e. Element e => MkElement e
 
-pack :: Element a => a -> DocContent
+pack :: Element e => e -> DocContent
 pack = MkElement
 
 
@@ -35,6 +35,15 @@ data Heading = Hd Int String
 instance Element Heading where
     toHtml (Hd s h) = let st = show s in
         ("<h" ++ st ++ ">" ++ h ++ "</h" ++ st ++ ">")
+
+
+
+-- table type
+data Table = Table { tableContent :: [[String]] }
+
+
+-- form type
+data Form = Form { formElements :: [[String]] }
 
 
 

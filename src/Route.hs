@@ -31,9 +31,9 @@ queryAction dev query =
     then
         if (last query) == '1'
         then do
-            mountDevice dev "/srv/storage"
+            mountDevice dev ("/srv/storage/" ++ (strId dev))
         else do
-            umountDevice "/srv/storage"
+            umountDevice ("/srv/storage/" ++ (strId dev))
     else do
         return ()
 
@@ -69,12 +69,14 @@ deviceTable = do
     dir <- showDirectory "/"
     dev <- updateDevices
     mnt <- updateMounts
+
+
     return $ (toHtmlTable (toDeviceTable dev) ++ toHtmlTable (toMountTable mnt))
 
 matchPattern :: String -> String -> IO String
 matchPattern str query = case str of
     ('/':[]) -> deviceTable
-    ('/':'p':'k':'g':'/':path) -> packageTable path
+    ('/':'p':'k':'g':'/':path) -> packageTable ("/" ++ path)
     ('/':'d':'e':'v':'/':path) -> deviceInfo path query
     otherwise -> do return "Error"
 
@@ -87,14 +89,14 @@ getPage path query = do
     return $ createPage name content
 
 
-response_header :: String -> String
-response_header content = ("HTTP/1.1 200 OK\nContent-Length: " ++ (show (length content)) ++ "\n\n")
+responseHeader :: String -> String
+responseHeader content = ("HTTP/1.1 200 OK\nContent-Length: " ++ (show (length content)) ++ "\n\n")
 
 
 getLocation :: String -> String -> IO String
 getLocation path query = do
     content <- getPage path query
-    return (response_header content ++ content)
+    return (responseHeader content ++ content)
 
 
 httpLine :: [String] -> IO String
@@ -103,7 +105,7 @@ httpLine (verb:path:version:[]) =
         response <- getLocation file query
         return response
 httpLine _ = do
-    return "HTTP/1.1 404 Not Found"
+    return "HTTP/1.1 404 Not Found\n\n"
 
 
 -- respond to HTTP get
