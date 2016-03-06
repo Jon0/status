@@ -1,7 +1,6 @@
 module Route where
 
 import System.IO
-import Network.HTTP
 import Device
 import File
 import Html
@@ -27,32 +26,61 @@ getLocation path = do
     return (response_header content ++ content)
 
 
+-- read kernel partition info
 deviceTable :: IO String
 deviceTable = do
     dir <- showDirectory "/"
     dev <- updateDevices
-    return $ toHtmlTable (toDeviceTable dev)
+    mnt <- updateMounts
+    return $ (toHtmlTable (toDeviceTable dev) ++ toHtmlTable (toMountTable mnt))
 
 
--- read paths from a file
+-- use the mount location of the filesystem
+packageTable :: String -> IO String
+packageTable path = do
+    dat <- loadPackageData path "statfile"
+    return $ toHtmlTable (toStorageTable dat)
+
+
+
+
+
+-- use the mount location of the filesystem
+deviceInfo :: String -> IO String
+deviceInfo path = do
+    dev <- updateDevices
+    case (findDeviceName dev path) of
+        Just d -> do
+            return formStr
+        Nothing -> do
+            return "No such device"
+
+
+-- match routes by regex from a file
 readRoute :: String -> IO RouteData
 readRoute url = do
+    filedata <- fileContent "routes"
     return $ RouteData url
+
+
+matchPattern :: String -> IO String
+matchPattern s = case s of
+    ('/':[]) -> deviceTable
+    ('/':'p':'k':'g':'/':path) -> packageTable path
+    ('/':'d':'e':'v':'/':path) -> deviceInfo path
+    otherwise -> do return "Error"
 
 
 getPage :: String -> IO String
 getPage path = do
     name <- getHostname
-    if path  == "/" then do
-        dev <- deviceTable
-        return $ createPage name dev
-    else do
-        dat <- loadPackageData path "statfile"
-        return $ createPage name (toHtmlTable (toStorageTable dat))
+    content <- matchPattern path
+    return $ createPage name content
 
 
-replyFn :: Handle -> IO ()
-replyFn hdl = do
+-- respond to HTTP get
+getResponse :: Handle -> IO ()
+getResponse hdl = do
     inpStr <- hGetLine hdl
     print $ words inpStr
     case element 1 (words inpStr) of
@@ -62,34 +90,14 @@ replyFn hdl = do
             response <- getLocation a
             hPutStrLn hdl response
 
---
-data Test = Sometype Int | B Bool
 
-test_fn :: Test
-test_fn = Sometype 0
+postResponse :: Handle -> IO ()
+postResponse hdl = do return ()
 
 
-req_handler :: Request String -> (String, Bool)
-req_handler request = ("test", True)
+errorResponse :: Handle -> IO ()
+errorResponse hdl = do return ()
 
-req_handler2 :: Request a -> (String, Bool)
-req_handler2 request = ("test", True)
 
---read_request :: (Stream s) => s -> IO String
---read_request s = do return "test"
-    --do
-    --input <- receiveHTTP str
-    --case input of
-    --    Nothing -> do
-    --        return "error"
-    --    Just request -> do
-    --        putStrLn $ receiveHTTP str
-    --        (response, done) <- req_handler request
-    --        return response
-    --return "."
---read_request _ = do return "..."
-
---read_requests2 :: HandleStream Socket -> IO String
---read_requests2 sock = do
-    -- http_data <- receiveHTTP sock
-    --return "test"
+replyFn :: Handle -> IO ()
+replyFn hdl = getResponse hdl

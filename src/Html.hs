@@ -5,13 +5,16 @@ class Element e where
 
 
 -- allow generic types of element
-data Showable = forall a . Element a => MkElement a
+data DocContent = forall a . Element a => MkElement a
 
-pack :: Element a => a -> Showable
+pack :: Element a => a -> DocContent
 pack = MkElement
 
 
-data HtmlDocument = HtmlDocument HtmlHeader [Showable]
+data HtmlDocument = HtmlDocument {
+    header :: HtmlHeader,
+    content :: [DocContent]
+}
 
 instance Element HtmlDocument where
     toHtml (HtmlDocument header objects) = ""
@@ -24,11 +27,13 @@ instance Element HtmlHeader where
     toHtml (HtmlHeader s) = ("<head><title>" ++ s ++ "</title></head>")
 
 
+-- heading type
 data Heading = Hd Int String
 
 instance Element Heading where
     toHtml (Hd s h) = let st = show s in
         ("<h" ++ st ++ ">" ++ h ++ "</h" ++ st ++ ">")
+
 
 
 showElem :: (Element e) => [e] -> String
@@ -51,5 +56,5 @@ createPage2 name content = let e = [Hd 4 "Test", Hd 4 "123"] in
 
 
 -- generate :: String -> [Element]
-template :: String -> [Showable]
+template :: String -> [DocContent]
 template content = [pack (Hd 4 "Test"), pack (Hd 4 "123")]

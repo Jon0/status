@@ -3,6 +3,7 @@ module File where
 import System.IO
 import System.Directory
 import Data.List
+import Control.Exception
 
 
 data Package = Package { pkgName :: String, pkgFiles :: [FilePath] }
@@ -37,12 +38,20 @@ toStorageTable :: Storage -> [[String]]
 toStorageTable st = [[(mountPoint st), "files"]] ++ (storageToStrings st)
 
 
+-- does the file get closed?
 fileContent :: FilePath -> IO String
 fileContent filename = do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
     return contents
 
+
+fileContent2 :: FilePath -> IO (Maybe String)
+fileContent2 filename = do
+    str <- bracket (openFile filename ReadMode)
+            (hClose)
+            (\hdl -> do contents <- hGetContents hdl; return contents)
+    return $ Just str
 
 getHostname :: IO String
 getHostname = fileContent "/etc/hostname"
