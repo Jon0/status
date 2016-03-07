@@ -15,6 +15,7 @@ data Storage = Storage { mountPoint :: FilePath, pkgData :: [Package] }
 --        return $ zipWith () [0..] list
 
 
+-- parsing functions
 lineToPackage :: String -> Package
 lineToPackage line = let (w:ws) = (words line) in
     Package w ws
@@ -24,22 +25,54 @@ packageToStrings :: Package -> [String]
 packageToStrings p = (pkgName p) : (pkgFiles p)
 
 
-storageToStrings :: Storage -> [[String]]
-storageToStrings st = (map packageToStrings (pkgData st))
+storageToStrings :: [Package] -> [[String]]
+storageToStrings ps = (map packageToStrings ps)
 
 
 storageSize :: Storage -> String
 storageSize st = ((show (length (pkgData st))) ++ " files")
 
 
+toStorageTable :: Storage -> [[String]]
+toStorageTable st = [[(mountPoint st), ("(" ++ (storageSize st) ++ ")")]] ++ (storageToStrings (pkgData st))
+
+
+-- get packages stored on a single device
 loadPackageData :: String -> String -> IO Storage
 loadPackageData mount datafile = do
     content <- fileContent (mount ++ "/" ++ datafile)
     return $ Storage mount (map lineToPackage (lines content))
 
 
-toStorageTable :: Storage -> [[String]]
-toStorageTable st = [[(mountPoint st), ("(" ++ (storageSize st) ++ ")")]] ++ (storageToStrings st)
+
+findPackageName :: [Package] -> String -> Maybe Package
+findPackageName [] _ = Nothing
+findPackageName (p:pkgs) name =
+    if (pkgName p) == name
+    then
+        Just p
+    else
+        findPackageName pkgs name
+
+
+
+findStores :: [Storage] -> String -> [Package]
+findStores [] _ = []
+findStores (d:devs) name =
+    case (findPackageName (pkgData d) name) of
+        Nothing -> findStores devs name
+        Just p -> (p : findStores devs name)
+
+
+-- return hostname
+getHostname :: IO String
+getHostname = fileContent "/etc/hostname"
+
+
+showDirectory :: FilePath -> IO [String]
+showDirectory path = do
+    content <- getDirectoryContents path
+    return $ content
 
 
 -- does the file get closed?
@@ -56,13 +89,3 @@ fileContent2 filename = do
             (hClose)
             (\hdl -> do contents <- hGetContents hdl; return contents)
     return $ Just str
-
-
-getHostname :: IO String
-getHostname = fileContent "/etc/hostname"
-
-
-showDirectory :: FilePath -> IO [String]
-showDirectory path = do
-    content <- getDirectoryContents path
-    return $ content

@@ -17,9 +17,41 @@ element index array
     | otherwise = Nothing
 
 
--- use the mount location of the filesystem
+getAllPackages :: [Mount] -> IO [Package]
+getAllPackages [] = do
+    return []
+getAllPackages (m:mnts) = do
+    dat <- loadPackageData (mntPath m) "statfile"
+    rpks <- getAllPackages mnts
+    return $ (pkgData dat) ++ rpks
+
+
+-- open statfile in each device
+showAllPackages :: [Mount] -> IO String
+showAllPackages mnts = do
+    pkg <- getAllPackages mnts
+    return $ toHtmlTable (storageToStrings pkg)
+
+
+showPackage :: [Mount] -> String -> IO String
+showPackage mnts name = do
+    return ""
+
+-- use all known devices and find by name
 packageTable :: String -> IO String
-packageTable path = do
+packageTable name = do
+    mnts <- mountsByPath "/srv/storage/"
+    if (length name) == 0
+    then do
+        html <- showAllPackages (deviceMounts mnts)
+        return html
+    else do
+        html <- showPackage (deviceMounts mnts) name
+        return html
+
+-- use the mount location of the filesystem
+mountPackageTable :: FilePath -> IO String
+mountPackageTable path = do
     dat <- loadPackageData path "statfile"
     return $ toHtmlTable (toStorageTable dat)
 
@@ -51,7 +83,8 @@ deviceInfo path query = do
             let mnt_name = ("/dev/" ++ strId d) in
                 case (findMountName mnt mnt_name) of
                     Just m -> do
-                        return ("<h3>" ++ mnt_name ++ " (" ++ (mntPath m) ++ ")</h3>" ++ formStr)
+                        pkgs <- mountPackageTable (mntPath m)
+                        return ("<h3>" ++ mnt_name ++ " (" ++ (mntPath m) ++ ")</h3>" ++ formStr ++ pkgs)
                     Nothing -> do
                         return ("<h3>" ++ mnt_name ++ " (U)</h3>" ++ formStr)
 
@@ -69,14 +102,12 @@ deviceTable = do
     dir <- showDirectory "/"
     dev <- updateDevices
     mnt <- updateMounts
-
-
     return $ (toHtmlTable (toDeviceTable dev) ++ toHtmlTable (toMountTable mnt))
 
 matchPattern :: String -> String -> IO String
 matchPattern str query = case str of
     ('/':[]) -> deviceTable
-    ('/':'p':'k':'g':'/':path) -> packageTable ("/" ++ path)
+    ('/':'p':'k':'g':'/':path) -> packageTable path
     ('/':'d':'e':'v':'/':path) -> deviceInfo path query
     otherwise -> do return "Error"
 

@@ -6,9 +6,14 @@ import System.Process
 import Text.Read
 import File
 
-
+-- a single block device
 data Device = Device { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
+
+-- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
+
+-- list of all mounts
+data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 
 
 concatMaybe :: [Maybe a] -> [a]
@@ -71,6 +76,16 @@ toMountTable :: [Mount] -> [[String]]
 toMountTable ms = (map toMountStrings ms)
 
 
+-- finding a mount by name
+findMountName :: [Mount] -> String -> Maybe Mount
+findMountName [] _ = Nothing
+findMountName (x:xs) s =
+    if (deviceName x) == s
+    then Just x
+    else findMountName xs s
+
+
+-- update using partitions file
 updateDevices :: IO [Device]
 updateDevices = do
     prt <- fileContent "/proc/partitions"
@@ -83,15 +98,23 @@ updateMounts = do
     return $ toMountArray (toFileTable mnt)
 
 
--- finding a mount by name
-findMountName :: [Mount] -> String -> Maybe Mount
-findMountName [] _ = Nothing
-findMountName (x:xs) s =
-    if (deviceName x) == s
-    then Just x
-    else findMountName xs s
+dirToMount :: (FilePath, String) -> Maybe Mount
+dirToMount (path, name) =
+    if (head name) == '.'
+    then
+        Nothing
+    else
+        Just $ Mount name (path ++ "/" ++ name)
 
 
+-- assume each subdirectory is a device
+mountsByPath :: FilePath -> IO MountPath
+mountsByPath path = do
+    dirs <- showDirectory path
+    return $ MountPath path (mapMaybe dirToMount (zip (cycle [path]) dirs))
+
+
+-- command line actions
 tryCommand :: String -> IO ()
 tryCommand cmd = do
     putStrLn cmd
