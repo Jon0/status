@@ -1,4 +1,4 @@
 module Config where
 
 -- application state
-data Config = Config { autoMount :: FilePath, hostPort :: Int }
+data Config = Config { contentPath :: FilePath, hostPort :: Int }
