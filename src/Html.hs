@@ -4,13 +4,11 @@ class Element e where
     toHtml :: e -> String
 
 -- allow generic types of element
-data DocContents a
+data DocContent = forall e. Element e => DC e
 
--- or
-data DocContent = forall e. Element e => MkElement e
-
+-- example function
 pack :: Element e => e -> DocContent
-pack = MkElement
+pack = DC
 
 
 data HtmlDocument = HtmlDocument {
