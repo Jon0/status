@@ -30,13 +30,13 @@ getAllPackages (m:mnts) = do
 showAllPackages :: [Mount] -> IO String
 showAllPackages mnts = do
     pkg <- getAllPackages mnts
-    return $ toHtmlTable (storageToStrings pkg)
+    return $ toHtmlTable (storageToHtml pkg)
 
 
 showPackage :: [Mount] -> String -> IO String
 showPackage mnts name = do
     pkg <- getAllPackages mnts
-    return $ toHtmlTable (storageToStrings pkg)
+    return $ toHtmlTable (storageToHtml pkg)
 
 
 -- use all known devices and find by name

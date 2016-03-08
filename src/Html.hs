@@ -1,69 +1,106 @@
 module Html where
 
-class Element e where
+
+htmlTag :: String -> String -> String
+htmlTag tag item = htmlTagOpt tag [] item
+
+
+htmlTagOpt :: String -> [String] -> String -> String
+htmlTagOpt tag opt item = ("<" ++ tag ++ ">" ++ item ++ "</" ++ tag ++ ">")
+
+
+-- transformable elements
+class HtmlElement e where
     toHtml :: e -> String
+    -- dimension :: e -> [Int]
+    -- subElements :: e -> [HtmlElement]
+
 
 -- allow generic types of element
-data DocContent = forall e. Element e => DC e
+data HtmlContent = forall e. HtmlElement e => HtmlContent e
+instance HtmlElement HtmlContent where
+  toHtml (HtmlContent a) = toHtml a
 
 -- example function
-pack :: Element e => e -> DocContent
-pack = DC
+pack :: HtmlElement e => e -> HtmlContent
+pack = HtmlContent
 
 
 data HtmlDocument = HtmlDocument {
     header :: HtmlHeader,
-    content :: [DocContent]
+    content :: [HtmlContent]
 }
 
-instance Element HtmlDocument where
+instance HtmlElement HtmlDocument where
     toHtml (HtmlDocument header objects) = ""
 
 
 -- header type
 data HtmlHeader = HtmlHeader String
 
-instance Element HtmlHeader where
-    toHtml (HtmlHeader s) = ("<head><title>" ++ s ++ "</title></head>")
+instance HtmlElement HtmlHeader where
+    toHtml (HtmlHeader s) = htmlTag "head" (htmlTag "title" s)
 
+
+
+-- string type
+data HtmlString = HtmlString String
+
+instance HtmlElement HtmlString where
+    toHtml (HtmlString s) = s
 
 -- heading type
-data Heading = Hd Int String
+data Heading = Heading Int String
 
-instance Element Heading where
-    toHtml (Hd s h) = let st = show s in
-        ("<h" ++ st ++ ">" ++ h ++ "</h" ++ st ++ ">")
-
-
+instance HtmlElement Heading where
+    toHtml (Heading s h) = let st = show s in
+        htmlTag ("h" ++ st) h
 
 -- table type
-data Table = Table { tableContent :: [[String]] }
+data HtmlTable = HtmlTable { tableContent :: [[HtmlContent]] }
+
+instance HtmlElement HtmlTable where
+    toHtml t = toHtmlTable (tableContent t)
+
+
+toHtmlTable :: [[HtmlContent]] -> String
+toHtmlTable tb = htmlTag "table" (concat $ map toHtmlTableRow tb)
+
+
+toHtmlTableRow :: [HtmlContent] -> String
+toHtmlTableRow line
+    | length line > 0 = htmlTag "tr" (concat $ map toHtmlTableItem line)
+    | otherwise = ""
+
+
+toHtmlTableItem :: HtmlContent -> String
+toHtmlTableItem item = htmlTag "td" (toHtml item)
 
 
 -- form type
 data Form = Form { formElements :: [[String]] }
 
 
+labelHtml :: String -> HtmlContent
+labelHtml s = HtmlContent (HtmlString s)
 
-showElem :: (Element e) => [e] -> String
+
+showElem :: (HtmlElement e) => [e] -> String
 showElem es = concat $ map toHtml es
 
 
 createHead :: String -> String
-createHead s = ("<head><title>" ++ s ++ "</title></head>")
+createHead s = htmlTag "head" (htmlTag "title" s)
+
 
 createBody :: String -> String
-createBody s = "<body>" ++ s ++ "</body>"
+createBody s = htmlTag "body" s
+
 
 createPage :: String -> String -> String
-createPage name content = "<!DOCTYPE html><html>" ++ createHead name ++ createBody content ++ "</html>"
-
-
-createPage2 :: String -> String -> String
-createPage2 name content = let e = [Hd 4 "Test", Hd 4 "123"] in
-    "<!DOCTYPE html><html>" ++ createHead name ++ createBody (showElem e) ++ "</html>"
+createPage name content = "<!DOCTYPE html>" ++ htmlTag "html" (createHead name ++ createBody content)
 
 
 -- generate :: String -> [Element]
-template :: String -> [DocContent]
-template content = [pack (Hd 4 "Test"), pack (Hd 4 "123")]
+template :: String -> [HtmlContent]
+template content = [pack (Heading 4 "Test"), pack (Heading 4 "123")]

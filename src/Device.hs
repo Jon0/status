@@ -4,10 +4,18 @@ module Device where
 import Data.Maybe
 import System.Process
 import Text.Read
+import Document
 import File
+import Html
+
 
 -- a single block device
 data Device = Device { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
+
+instance DocNode Device where
+    createHtml dev style = do
+        return $ HtmlContent (HtmlTable {tableContent = [[]]})
+
 
 -- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
@@ -48,12 +56,12 @@ findDeviceName (x:xs) s =
 
 
 -- devices into html table objects
-toDeviceStrings :: Device -> [String]
-toDeviceStrings ds = [(show (majorId ds)), (show (minorId ds)), (show (blocks ds)), strId ds]
+toDeviceStrings :: Device -> [HtmlContent]
+toDeviceStrings ds = [labelHtml (show (majorId ds)), labelHtml (show (minorId ds)), labelHtml (show (blocks ds)), labelHtml (strId ds)]
 
 
-toDeviceTable :: [Device] -> [[String]]
-toDeviceTable ds = [["maj", "min", "blocks", "name"]] ++ (map toDeviceStrings ds)
+toDeviceTable :: [Device] -> [[HtmlContent]]
+toDeviceTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (map toDeviceStrings ds)
 
 
 deviceInfoPath :: Device -> FilePath
@@ -68,11 +76,11 @@ toMountArray :: [[String]] -> [Mount]
 toMountArray dat = map toMount dat
 
 
-toMountStrings :: Mount -> [String]
-toMountStrings m = [(deviceName m), (mntPath m)]
+toMountStrings :: Mount -> [HtmlContent]
+toMountStrings m = [labelHtml (deviceName m), labelHtml (mntPath m)]
 
 -- mounts to table
-toMountTable :: [Mount] -> [[String]]
+toMountTable :: [Mount] -> [[HtmlContent]]
 toMountTable ms = (map toMountStrings ms)
 
 

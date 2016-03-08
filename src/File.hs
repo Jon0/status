@@ -1,13 +1,26 @@
 module File where
 
+
 import System.IO
 import System.Directory
 import Data.List
 import Control.Exception
+import Document
+import Html
 
 
 data Package = Package { pkgName :: String, pkgFiles :: [FilePath] }
+
+instance DocNode Package where
+    createHtml dev style = do
+        return $ HtmlContent (HtmlTable {tableContent = [[]]})
+
+
 data Storage = Storage { mountPoint :: FilePath, pkgData :: [Package] }
+
+instance DocNode Storage where
+    createHtml dev style = do
+        return $ HtmlContent (HtmlTable {tableContent = [[]]})
 
 
 --tz contents = do
@@ -21,20 +34,27 @@ lineToPackage line = let (w:ws) = (words line) in
     Package w ws
 
 
-packageToStrings :: Package -> [String]
-packageToStrings p = (pkgName p) : (pkgFiles p)
+pathsToHtml :: FilePath -> HtmlContent
+pathsToHtml p = HtmlContent (Heading 3 p)
 
 
-storageToStrings :: [Package] -> [[String]]
-storageToStrings ps = (map packageToStrings ps)
+packageToHtml :: Package -> [HtmlContent]
+packageToHtml p = HtmlContent (Heading 3 (pkgName p)) : (map pathsToHtml (pkgFiles p))
+
+
+storageToHtml :: [Package] -> [[HtmlContent]]
+storageToHtml ps = (map packageToHtml ps)
 
 
 storageSize :: Storage -> String
 storageSize st = ((show (length (pkgData st))) ++ " files")
 
 
-toStorageTable :: Storage -> [[String]]
-toStorageTable st = [[(mountPoint st), ("(" ++ (storageSize st) ++ ")")]] ++ (storageToStrings (pkgData st))
+storageTableHeader :: Storage -> [HtmlContent]
+storageTableHeader st = [HtmlContent (Heading 3 (mountPoint st)), HtmlContent (Heading 3 ("(" ++ (storageSize st)++ ")" ))]
+
+toStorageTable :: Storage -> [[HtmlContent]]
+toStorageTable st =  (storageTableHeader st) : (storageToHtml (pkgData st))
 
 
 -- get packages stored on a single device

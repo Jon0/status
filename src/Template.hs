@@ -20,20 +20,6 @@ dirTemplate :: [String] -> String
 dirTemplate items = concat $ map nameToLabel items
 
 
-toHtmlTable :: [[String]] -> String
-toHtmlTable tb = ("<table>" ++ (concat $ map toTableRow tb) ++ "</table>")
-
-
-toTableRow :: [String] -> String
-toTableRow line
-    | length line > 0 = ("<tr>" ++ (concat (map toTableItem line)) ++ "</tr>")
-    | otherwise = ""
-
-
-toTableItem :: String -> String
-toTableItem name = ("<td>" ++ name ++ "</td>")
-
-
 -- example form
 formStr = unlines [
     "<form action=\"\" method=\"get\">",
