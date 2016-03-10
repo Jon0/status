@@ -1,6 +1,6 @@
 module Document where
 
-
+import Data.Char
 import Data.Maybe
 import System.IO
 import System.Directory
@@ -18,6 +18,15 @@ concatMaybe (x:xs) = case x of
 splitLines :: String -> [[String]]
 splitLines str = map words (lines str)
 
+
+-- split while keeping empty strings
+allWords :: String -> [String]
+allWords "" = []
+allWords s =
+    let (a, b) = (break isSpace s) in
+        if (length b) == 0
+        then [a]
+        else a : (allWords (tail b))
 
 -- map function containing index of elements
 mapIndexedInt :: (Int -> a -> b) -> Int -> [a] -> [b]

@@ -1,6 +1,6 @@
 module Device where
 
-
+import Data.List
 import Data.Maybe
 import System.Process
 import Text.Read
@@ -11,12 +11,12 @@ import Package
 
 
 -- a single block device
-data Device = Device { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
+data Partition = Partition { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
 
-instance Table Device where
+instance Table Partition where
     -- order: major, minor, blocks, name
     readLine (a:b:c:d:[]) = case (readMaybe a :: Maybe Int, readMaybe b :: Maybe Int, readMaybe c :: Maybe Int) of
-        (Just ra, Just rb, Just rc) -> Just $ Device ra rb rc d
+        (Just ra, Just rb, Just rc) -> Just $ Partition ra rb rc d
         otherwise -> Nothing
     readLine _ = Nothing
 
@@ -36,30 +36,37 @@ instance Table Mount where
 data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 
 
+data ManagedMount = ManagedMount { autoMount :: Bool, fsType :: String, fsName :: String }
+
+
+-- collected relevant data about one device
+data Device = Device { devPart :: Partition, devMount :: Maybe ManagedMount }
+
+
 --find device by name
-findDeviceName :: [Device] -> String -> Maybe Device
-findDeviceName [] _ = Nothing
-findDeviceName (x:xs) s =
+findPartitionName :: [Partition] -> String -> Maybe Partition
+findPartitionName [] _ = Nothing
+findPartitionName (x:xs) s =
     if (strId x) == s
     then Just x
-    else findDeviceName xs s
+    else findPartitionName xs s
 
 
 -- currently not used
-deviceInfoPath :: Device -> FilePath
-deviceInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show (minorId ds)))
+partitionInfoPath :: Partition -> FilePath
+partitionInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show (minorId ds)))
 
 
 -- transform the device table data
-devMaps :: Int -> String -> String
-devMaps 3 str = htmlTagOpt "a" [("href=\"/dev/" ++ str ++ "\"")] str
-devMaps _ str = str
+partMaps :: Int -> String -> String
+partMaps 3 str = htmlTagOpt "a" [("href=\"/dev/" ++ str ++ "\"")] str
+partMaps _ str = str
 
-devToHtml :: [Device] -> [[HtmlContent]]
-devToHtml tb = linesToHtml (showTableMap devMaps tb)
+partToHtml :: [Partition] -> [[HtmlContent]]
+partToHtml tb = linesToHtml (showTableMap partMaps tb)
 
-toDeviceTable :: [Device] -> [[HtmlContent]]
-toDeviceTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (devToHtml ds)
+toPartitionTable :: [Partition] -> [[HtmlContent]]
+toPartitionTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (partToHtml ds)
 
 
 
@@ -78,8 +85,8 @@ findMountName (x:xs) s =
 
 
 -- update using partitions file
-updateDevices :: IO [Device]
-updateDevices = readTable "/proc/partitions"
+updatePartitions :: IO [Partition]
+updatePartitions = readTable "/proc/partitions"
 
 
 updateMounts :: IO [Mount]
@@ -111,7 +118,14 @@ tryCommand cmd = do
     putStrLn $ show code
 
 
-mountDevice :: Device -> FilePath -> IO ()
+listBlock :: [String] -> IO [[String]]
+listBlock items = do
+    result <- readProcess "lsblk" ["-r", ("-o" ++ (intercalate "," items))] ""
+    return $ map allWords (lines result)
+
+
+
+mountDevice :: Partition -> FilePath -> IO ()
 mountDevice d p = do
     tryCommand ("mkdir " ++ p)
     tryCommand ("mount /dev/" ++ strId d ++ " " ++ p)

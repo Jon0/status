@@ -61,7 +61,7 @@ mountPackageTable path = do
 
 
 -- mounts and umounts devices
-queryAction :: Device -> String -> IO ()
+queryAction :: Partition -> String -> IO ()
 queryAction dev query =
     if (length query) > 0
     then
@@ -77,10 +77,11 @@ queryAction dev query =
 -- use the mount location of the filesystem
 deviceInfo :: String -> String -> IO String
 deviceInfo path query = do
-    dev <- updateDevices
-    case (findDeviceName dev path) of
+    dev <- updatePartitions
+    case (findPartitionName dev path) of
         Nothing -> do
-            return "No such device"
+            blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "label", "uuid", "state", "model", "serial", "vendor"]
+            return $ toHtmlTable (linesToHtml blks)
         Just d -> do
             queryAction d query
             mnt <- updateMounts
@@ -104,9 +105,9 @@ readRoute url = do
 deviceTable :: IO String
 deviceTable = do
     dir <- showDirectory "/"
-    dev <- updateDevices
+    dev <- updatePartitions
     mnt <- updateMounts
-    return $ (toHtmlTable (toDeviceTable dev) ++ toHtmlTable (toMountTable mnt))
+    return $ (toHtmlTable (toPartitionTable dev) ++ toHtmlTable (toMountTable mnt))
 
 matchPattern :: String -> String -> IO String
 matchPattern str query = case str of
