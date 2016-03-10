@@ -17,6 +17,14 @@ instance DocNode Device where
         return $ HtmlContent (HtmlTable {tableContent = [[]]})
 
 
+instance Table Device where
+    --readLine :: [String] -> Maybe rowType
+    readLine str = Nothing
+
+    --showLine :: rowType -> [String]
+    showLine row = []
+
+
 -- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
 

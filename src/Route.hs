@@ -33,6 +33,7 @@ showAllPackages mnts = do
     return $ toHtmlTable (storageToHtml pkg)
 
 
+-- filter a particular name
 showPackage :: [Mount] -> String -> IO String
 showPackage mnts name = do
     pkg <- getAllPackages mnts
@@ -42,7 +43,7 @@ showPackage mnts name = do
 -- use all known devices and find by name
 packageTable :: String -> IO String
 packageTable name = do
-    mnts <- mountsByPath "/srv/storage/"
+    mnts <- mountsByPath "/srv/storage"
     if (length name) == 0
     then do
         html <- showAllPackages (deviceMounts mnts)
