@@ -52,7 +52,7 @@ deviceInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show (m
 
 -- transform the device table data
 devMaps :: Int -> String -> String
-devMaps 3 str = htmlTag "href" str
+devMaps 3 str = htmlTagOpt "a" [("href=\"/dev/" ++ str ++ "\"")] str
 devMaps _ str = str
 
 devToHtml :: [Device] -> [[HtmlContent]]

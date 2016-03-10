@@ -1,12 +1,16 @@
 module Html where
 
+import Data.List
+
 
 htmlTag :: String -> String -> String
 htmlTag tag item = htmlTagOpt tag [] item
 
 
 htmlTagOpt :: String -> [String] -> String -> String
-htmlTagOpt tag opt item = ("<" ++ tag ++ ">" ++ item ++ "</" ++ tag ++ ">")
+htmlTagOpt tag [] item = ("<" ++ tag ++ ">" ++ item ++ "</" ++ tag ++ ">")
+htmlTagOpt tag opt item = ("<" ++ tag ++ " " ++ opts ++ ">" ++ item ++ "</" ++ tag ++ ">") where
+    opts = (intercalate " " opt)
 
 
 -- transformable elements
