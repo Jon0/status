@@ -104,3 +104,12 @@ createPage name content = "<!DOCTYPE html>" ++ htmlTag "html" (createHead name +
 -- generate :: String -> [Element]
 template :: String -> [HtmlContent]
 template content = [pack (Heading 4 "Test"), pack (Heading 4 "123")]
+
+
+-- tables into html tables
+lineToHtml :: [String] -> [HtmlContent]
+lineToHtml str = map labelHtml str
+
+
+linesToHtml :: [[String]] -> [[HtmlContent]]
+linesToHtml strs = (map lineToHtml strs)

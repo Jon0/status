@@ -7,51 +7,33 @@ import Text.Read
 import Document
 import File
 import Html
+import Package
 
 
 -- a single block device
 data Device = Device { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
 
-instance DocNode Device where
-    createHtml dev style = do
-        return $ HtmlContent (HtmlTable {tableContent = [[]]})
-
-
 instance Table Device where
-    --readLine :: [String] -> Maybe rowType
-    readLine str = Nothing
+    -- order: major, minor, blocks, name
+    readLine (a:b:c:d:[]) = case (readMaybe a :: Maybe Int, readMaybe b :: Maybe Int, readMaybe c :: Maybe Int) of
+        (Just ra, Just rb, Just rc) -> Just $ Device ra rb rc d
+        otherwise -> Nothing
+    readLine _ = Nothing
 
     --showLine :: rowType -> [String]
-    showLine row = []
+    showLine ds = [(show (majorId ds)), (show (minorId ds)), (show (blocks ds)), (strId ds)]
 
 
 -- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
 
+instance Table Mount where
+    readLine (a:b:xs) = Just $ Mount a b
+    showLine m = [(deviceName m), (mntPath m)]
+
+
 -- list of all mounts
 data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
-
-
-concatMaybe :: [Maybe a] -> [a]
-concatMaybe (x:xs) = case x of
-    Just a -> a : (concatMaybe xs)
-    Nothing -> (concatMaybe xs)
-
-
--- convert file arrays of lines and words
-toFileTable :: String -> [[String]]
-toFileTable str = map words (lines str)
-
-
--- order: major, minor, blocks, name
-toDevice :: [String] -> Maybe Device
-toDevice (a:b:c:d:[]) = case (readMaybe a :: Maybe Int, readMaybe b :: Maybe Int, readMaybe c :: Maybe Int) of
-    (Just ra, Just rb, Just rc) -> Just $ Device ra rb rc d
-    otherwise -> Nothing
-toDevice _ = Nothing
-
-toDeviceArray :: [[String]] -> [Device]
-toDeviceArray tb = mapMaybe toDevice tb
 
 
 --find device by name
@@ -63,33 +45,27 @@ findDeviceName (x:xs) s =
     else findDeviceName xs s
 
 
--- devices into html table objects
-toDeviceStrings :: Device -> [HtmlContent]
-toDeviceStrings ds = [labelHtml (show (majorId ds)), labelHtml (show (minorId ds)), labelHtml (show (blocks ds)), labelHtml (strId ds)]
-
-
-toDeviceTable :: [Device] -> [[HtmlContent]]
-toDeviceTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (map toDeviceStrings ds)
-
-
+-- currently not used
 deviceInfoPath :: Device -> FilePath
 deviceInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show (minorId ds)))
 
 
-toMount :: [String] -> Mount
-toMount (a:b:xs) = Mount a b
+-- transform the device table data
+devMaps :: Int -> String -> String
+devMaps 3 str = htmlTag "href" str
+devMaps _ str = str
 
--- raw file to mounts
-toMountArray :: [[String]] -> [Mount]
-toMountArray dat = map toMount dat
+devToHtml :: [Device] -> [[HtmlContent]]
+devToHtml tb = linesToHtml (showTableMap devMaps tb)
+
+toDeviceTable :: [Device] -> [[HtmlContent]]
+toDeviceTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (devToHtml ds)
 
 
-toMountStrings :: Mount -> [HtmlContent]
-toMountStrings m = [labelHtml (deviceName m), labelHtml (mntPath m)]
 
 -- mounts to table
 toMountTable :: [Mount] -> [[HtmlContent]]
-toMountTable ms = (map toMountStrings ms)
+toMountTable ms = linesToHtml (showTable ms)
 
 
 -- finding a mount by name
@@ -103,15 +79,11 @@ findMountName (x:xs) s =
 
 -- update using partitions file
 updateDevices :: IO [Device]
-updateDevices = do
-    prt <- fileContent "/proc/partitions"
-    return $ toDeviceArray (toFileTable prt)
+updateDevices = readTable "/proc/partitions"
 
 
 updateMounts :: IO [Mount]
-updateMounts = do
-    mnt <- fileContent "/proc/mounts"
-    return $ toMountArray (toFileTable mnt)
+updateMounts = readTable "/proc/mounts"
 
 
 dirToMount :: (FilePath, String) -> Maybe Mount
