@@ -80,7 +80,7 @@ deviceInfo path query = do
     dev <- updatePartitions
     case (findPartitionName dev path) of
         Nothing -> do
-            blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "label", "uuid", "state", "model", "serial", "vendor"]
+            blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
             return $ toHtmlTable (linesToHtml blks)
         Just d -> do
             queryAction d query
