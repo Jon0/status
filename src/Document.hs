@@ -37,6 +37,17 @@ mapIndexed :: (Int -> a -> b) -> [a] -> [b]
 mapIndexed fn a = mapIndexedInt fn 0 a
 
 
+-- attributes for objects
+class Linked l where
+    getUrl :: l -> Maybe String
+
+-- or use a renderable type containing all attributes
+class Renderable r where
+    render :: r -> IO HtmlContent
+    staticUrl :: r -> Maybe String
+
+
+
 data RenderMode = Basic | All
 data DocStyle = DocStyle { renderMode :: RenderMode } --deriving (Show)
 
