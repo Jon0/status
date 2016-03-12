@@ -37,6 +37,13 @@ mapIndexed :: (Int -> a -> b) -> [a] -> [b]
 mapIndexed fn a = mapIndexedInt fn 0 a
 
 
+-- safe element access
+element :: Int -> [a] -> Maybe a
+element index array
+    | index < length array = Just $ array !! index
+    | otherwise = Nothing
+
+
 -- attributes for objects
 class Linked l where
     getUrl :: l -> Maybe String

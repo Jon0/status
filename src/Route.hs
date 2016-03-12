@@ -1,8 +1,8 @@
 module Route where
 
-
 import System.IO
 import Device
+import Document
 import File
 import Html
 import Package
@@ -11,11 +11,16 @@ import Template
 
 data RouteData = RouteData { url :: String }
 
+data RouteItem =
+    RouteLeaf { routeContent :: RouteData }
+    | RouteNode { subItems :: (String -> Maybe RouteItem) }
 
-element :: Int -> [a] -> Maybe a
-element index array
-    | index < length array = Just $ array !! index
-    | otherwise = Nothing
+
+class RouteGroup g where
+    routeName :: g -> String
+    subRoutes :: g -> [String]
+    subGroups :: (RouteGroup s) => g -> (String -> Maybe s)
+    routeItem :: (Renderable r) => g -> (String -> IO (Maybe r))
 
 
 getAllPackages :: [Mount] -> IO [Package]
