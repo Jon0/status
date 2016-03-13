@@ -8,11 +8,16 @@ import Html
 import Package
 import Template
 
+-- a data file contain route information
+data RouteData = RouteData { routes :: [String] }
 
-data RouteData = RouteData { url :: String }
+-- http types
+data HttpRequest = HttpRequest { path :: String, query :: String }
+
+data HttpResponse = HttpResponse { content :: String }
 
 data RouteItem =
-    RouteLeaf { routeContent :: RouteData }
+    RouteLeaf { routeContent :: (HttpRequest -> HttpResponse) }
     | RouteNode { subItems :: (String -> Maybe RouteItem) }
 
 
@@ -21,6 +26,13 @@ class RouteGroup g where
     subRoutes :: g -> [String]
     subGroups :: (RouteGroup s) => g -> (String -> Maybe s)
     routeItem :: (Renderable r) => g -> (String -> IO (Maybe r))
+
+
+
+mainSub :: String -> Maybe RouteItem
+mainSub s = Nothing
+
+
 
 
 getAllPackages :: [Mount] -> IO [Package]
@@ -103,7 +115,7 @@ deviceInfo path query = do
 readRoute :: String -> IO RouteData
 readRoute url = do
     filedata <- fileContent "routes"
-    return $ RouteData url
+    return $ RouteData [url]
 
 
 -- read kernel partition info
