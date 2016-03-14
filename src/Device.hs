@@ -84,6 +84,16 @@ findMountName (x:xs) s =
     else findMountName xs s
 
 
+-- get a complete list of packages
+getAllPackages :: [Mount] -> IO [Package]
+getAllPackages [] = do
+    return []
+getAllPackages (m:mnts) = do
+    dat <- loadPackageData (mntPath m) "statfile"
+    rpks <- getAllPackages mnts
+    return $ (pkgData dat) ++ rpks
+
+
 -- update using partitions file
 updatePartitions :: IO [Partition]
 updatePartitions = readTable "/proc/partitions"

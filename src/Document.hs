@@ -19,14 +19,20 @@ splitLines :: String -> [[String]]
 splitLines str = map words (lines str)
 
 
--- split while keeping empty strings
-allWords :: String -> [String]
-allWords "" = []
-allWords s =
-    let (a, b) = (break isSpace s) in
+-- split using delimiter
+wordDelim :: (Char -> Bool) -> String -> [String]
+wordDelim _ "" = []
+wordDelim d s =
+    let (a, b) = (break d s) in
         if (length b) == 0
         then [a]
-        else a : (allWords (tail b))
+        else a : (wordDelim d (tail b))
+
+
+-- split while keeping empty strings
+allWords :: String -> [String]
+allWords s = wordDelim isSpace s
+
 
 -- map function containing index of elements
 mapIndexedInt :: (Int -> a -> b) -> Int -> [a] -> [b]

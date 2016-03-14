@@ -3,6 +3,36 @@ module Http where
 import Network.HTTP
 import Network.Stream
 
+-- http types
+data HttpRequest = HttpRequest { path :: String, query :: String }
+
+data HttpResponse = HttpResponse { header :: String, content :: String }
+
+data RouteContent = RouteContent { respondFn :: (HttpRequest -> IO HttpResponse) }
+
+data RouteItem =
+    RouteLeaf { routeContent :: (HttpRequest -> IO HttpResponse) }
+    | RouteNode { subRoutes :: (String -> Maybe RouteItem) }
+
+
+
+-- types which can appear as routes
+class RouteType r where
+    routeName :: r -> String
+    routeKey :: r -> [String]
+    routeMap :: r -> RouteItem
+
+
+-- matches path to content producer
+routeMatch :: RouteItem -> [String] -> Maybe (HttpRequest -> IO HttpResponse)
+routeMatch (RouteLeaf c) _ = Just $ c
+routeMatch (RouteNode n) [] = Nothing
+routeMatch (RouteNode n) path = case (n (head path)) of
+    Nothing -> Nothing
+    Just r -> routeMatch r (tail path)
+
+
+-- unused
 type RequestHandler = Request_String -> IO Response_String
 
 

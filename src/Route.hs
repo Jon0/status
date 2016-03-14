@@ -5,28 +5,12 @@ import Device
 import Document
 import File
 import Html
+import Http
 import Package
 import Template
 
--- a data file contain route information
+-- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
-
--- http types
-data HttpRequest = HttpRequest { path :: String, query :: String }
-
-data HttpResponse = HttpResponse { content :: String }
-
-data RouteItem =
-    RouteLeaf { routeContent :: (HttpRequest -> HttpResponse) }
-    | RouteNode { subItems :: (String -> Maybe RouteItem) }
-
-
-class RouteGroup g where
-    routeName :: g -> String
-    subRoutes :: g -> [String]
-    subGroups :: (RouteGroup s) => g -> (String -> Maybe s)
-    routeItem :: (Renderable r) => g -> (String -> IO (Maybe r))
-
 
 
 mainSub :: String -> Maybe RouteItem
@@ -34,41 +18,26 @@ mainSub s = Nothing
 
 
 
-
-getAllPackages :: [Mount] -> IO [Package]
-getAllPackages [] = do
-    return []
-getAllPackages (m:mnts) = do
-    dat <- loadPackageData (mntPath m) "statfile"
-    rpks <- getAllPackages mnts
-    return $ (pkgData dat) ++ rpks
-
-
 -- open statfile in each device
-showAllPackages :: [Mount] -> IO String
-showAllPackages mnts = do
-    pkg <- getAllPackages mnts
-    return $ toHtmlTable (storageToHtml pkg)
+showAllPackages :: [Package] -> String
+showAllPackages pkg = toHtmlTable (storageToHtml pkg)
 
 
 -- filter a particular name
-showPackage :: [Mount] -> String -> IO String
-showPackage mnts name = do
-    pkg <- getAllPackages mnts
-    return $ toHtmlTable (storageToHtml pkg)
+showPackage :: [Package] -> String -> String
+showPackage pkg name = toHtmlTable (storageToHtml pkg)
 
 
 -- use all known devices and find by name
 packageTable :: String -> IO String
 packageTable name = do
     mnts <- mountsByPath "/srv/storage"
+    pkgs <- getAllPackages (deviceMounts mnts)
     if (length name) == 0
     then do
-        html <- showAllPackages (deviceMounts mnts)
-        return html
+        return $ showAllPackages pkgs
     else do
-        html <- showPackage (deviceMounts mnts) name
-        return html
+        return $ showPackage pkgs name
 
 -- use the mount location of the filesystem
 mountPackageTable :: FilePath -> IO String
@@ -126,6 +95,7 @@ deviceTable = do
     mnt <- updateMounts
     return $ (toHtmlTable (toPartitionTable dev) ++ toHtmlTable (toMountTable mnt))
 
+
 matchPattern :: String -> String -> IO String
 matchPattern str query = case str of
     ('/':[]) -> deviceTable
@@ -152,6 +122,11 @@ getLocation path query = do
     return (responseHeader content ++ content)
 
 
+
+
+
+
+-- unused
 httpLine :: [String] -> IO String
 httpLine (verb:path:version:[]) =
     let (file, query) = break (=='?') path in do
@@ -159,6 +134,16 @@ httpLine (verb:path:version:[]) =
         return response
 httpLine _ = do
     return "HTTP/1.1 404 Not Found\n\n"
+
+
+
+firstHeaderLine :: [String] -> Maybe HttpRequest
+firstHeaderLine (verb:path:version:[]) =
+    let (file, query) = break (=='?') path in
+        Just $ HttpRequest file query
+firstHeaderLine _ = Nothing
+
+
 
 
 -- respond to HTTP get
