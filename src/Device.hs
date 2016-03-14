@@ -8,7 +8,7 @@ import Document
 import File
 import Html
 import Package
-
+import Util
 
 -- a single block device
 data Partition = Partition { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }

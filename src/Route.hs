@@ -9,8 +9,47 @@ import Http
 import Package
 import Template
 
+
 -- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
+
+
+-- routes ending in /
+--   lead to a general list response
+
+data DeviceList = DeviceList { deviceItems :: [Device] }
+
+
+instance RouteType DeviceList where
+    --routeName :: r -> String
+    routeName dev = "name"
+    --routeKey :: r -> [String]
+    routeKey dev = []
+    --routeMap :: r -> RouteItem
+
+    --updateType :: [String] -> IO r
+
+
+
+data PackagePage = PackagePage { packageItems :: [String] }
+
+
+
+
+
+data MainPage = MainPage { mainItems :: [String] }
+
+instance RouteType MainPage where
+    routeName dev = "name"
+    routeKey dev = []
+    --routeMap :: r -> RouteItem
+
+    --updateType :: [String] -> IO r
+
+
+mainPageMap :: String -> Maybe RouteItem
+mainPageMap path = Nothing
+
 
 
 mainSub :: String -> Maybe RouteItem
@@ -95,7 +134,7 @@ deviceTable = do
     mnt <- updateMounts
     return $ (toHtmlTable (toPartitionTable dev) ++ toHtmlTable (toMountTable mnt))
 
-
+-- change to HttpRequest -> IO HttpResponse?
 matchPattern :: String -> String -> IO String
 matchPattern str query = case str of
     ('/':[]) -> deviceTable
@@ -103,7 +142,7 @@ matchPattern str query = case str of
     ('/':'d':'e':'v':'/':path) -> deviceInfo path query
     otherwise -> do return "Error"
 
-
+-- unused
 -- forms the html page content
 getPage :: String -> String -> IO String
 getPage path query = do
@@ -115,7 +154,7 @@ getPage path query = do
 responseHeader :: String -> String
 responseHeader content = ("HTTP/1.1 200 OK\nContent-Length: " ++ (show (length content)) ++ "\n\n")
 
-
+-- should return HttpResponse
 getLocation :: String -> String -> IO String
 getLocation path query = do
     content <- getPage path query
@@ -124,6 +163,20 @@ getLocation path query = do
 
 
 
+-- read and reply to a request, given a socket handle
+httpGetHandler :: RouteItem -> Handle -> IO ()
+httpGetHandler routes hdl = do
+    inpStr <- hGetLine hdl
+    print $ words inpStr
+    case (firstHeaderLine (words inpStr)) of
+        Nothing -> do
+            hPutStrLn hdl ((makeResponseLine 400) ++ "\n\n")
+        Just r -> case requestMatch routes r of
+            Nothing -> do
+                hPutStrLn hdl ((makeResponseLine 404) ++ "\n\n")
+            Just out -> do
+                response <- out
+                hPutStrLn hdl (responseString response)
 
 
 -- unused
@@ -133,20 +186,11 @@ httpLine (verb:path:version:[]) =
         response <- getLocation file query
         return response
 httpLine _ = do
-    return "HTTP/1.1 404 Not Found\n\n"
+    return $ (makeResponseLine 400) ++ "\n\n"
 
 
 
-firstHeaderLine :: [String] -> Maybe HttpRequest
-firstHeaderLine (verb:path:version:[]) =
-    let (file, query) = break (=='?') path in
-        Just $ HttpRequest file query
-firstHeaderLine _ = Nothing
-
-
-
-
--- respond to HTTP get
+-- unused respond to HTTP get
 getResponse :: Handle -> IO ()
 getResponse hdl = do
     inpStr <- hGetLine hdl
