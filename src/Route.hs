@@ -40,11 +40,11 @@ data PackagePage = PackagePage { packageItems :: [String] }
 data MainPage = MainPage { mainItems :: [String] }
 
 instance RouteType MainPage where
-    routeName dev = "name"
-    routeKey dev = []
-    --routeMap :: r -> RouteItem
-
-    --updateType :: [String] -> IO r
+    routeName main = "/"
+    routeKey main = []
+    routeMap main = RouteNode mainPageMap
+    updateType strs = do
+        return $ MainPage []
 
 
 mainPageMap :: String -> Maybe RouteItem
