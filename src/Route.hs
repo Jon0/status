@@ -56,6 +56,9 @@ mainSub :: String -> Maybe RouteItem
 mainSub s = Nothing
 
 
+routeBase :: MainPage
+routeBase = MainPage []
+
 
 -- open statfile in each device
 showAllPackages :: [Package] -> String
@@ -208,4 +211,4 @@ errorResponse hdl = do return ()
 
 
 replyFn :: Handle -> IO ()
-replyFn hdl = getResponse hdl
+replyFn hdl = httpGetHandler (routeMap routeBase) hdl
