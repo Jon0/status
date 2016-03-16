@@ -28,13 +28,20 @@ class RouteType r where
     updateType :: [String] -> IO r
 
 
+showRequest :: HttpRequest -> String
+showRequest request = ((show (urlSplit request)) ++ "\n" ++ (query request) ++ "\n")
+
+
 -- matches path to content producer
 routeMatch :: RouteItem -> [String] -> Maybe (HttpRequest -> IO HttpResponse)
 routeMatch (RouteLeaf c) _ = Just $ c
-routeMatch (RouteNode n) [] = Nothing
+routeMatch (RouteNode n) [] = case (n "") of
+    Nothing -> Nothing
+    Just r -> routeMatch r []
 routeMatch (RouteNode n) path = case (n (head path)) of
     Nothing -> Nothing
     Just r -> routeMatch r (tail path)
+
 
 -- similiar to route match
 requestMatch :: RouteItem -> HttpRequest -> Maybe (IO HttpResponse)
@@ -52,7 +59,7 @@ firstHeaderLine _ = Nothing
 
 
 urlSplit :: HttpRequest -> [String]
-urlSplit req = wordDelim (=='/') (urlString req)
+urlSplit req = filterEmpty (wordDelim (=='/') (urlString req))
 
 
 codeName :: Int -> String
@@ -63,13 +70,19 @@ codeName code =
         404 -> "Not Found"
         otherwise -> "Unknown"
 
-
+-- create the first header response line
 makeResponseLine :: Int -> String
 makeResponseLine code = ("HTTP/1.1 " ++ (show code) ++ " " ++ (codeName code))
 
 
+-- creates a general response from a string of content
+generalResponse :: String -> HttpResponse
+generalResponse content = (HttpResponse header content) where
+    header = [(makeResponseLine 200), ("Content-Length: " ++ (show (length content)))]
+
+
 responseString :: HttpResponse -> String
-responseString r = ((intercalate "\n" (header r)) ++ "\n" ++ (content r))
+responseString r = ((intercalate "\n" (header r)) ++ "\n\n" ++ (content r))
 
 
 -- unused

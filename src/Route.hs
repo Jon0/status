@@ -10,31 +10,15 @@ import Package
 import Template
 
 
+
+debugPageHandler :: HttpRequest -> IO HttpResponse
+debugPageHandler request = do
+    html <- pageWithHostName (showRequest request)
+    return $ generalResponse html
+
+
 -- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
-
-
--- routes ending in /
---   lead to a general list response
-
-data DeviceList = DeviceList { deviceItems :: [Device] }
-
-
-instance RouteType DeviceList where
-    --routeName :: r -> String
-    routeName dev = "name"
-    --routeKey :: r -> [String]
-    routeKey dev = []
-    --routeMap :: r -> RouteItem
-
-    --updateType :: [String] -> IO r
-
-
-
-data PackagePage = PackagePage { packageItems :: [String] }
-
-
-
 
 
 data MainPage = MainPage { mainItems :: [String] }
@@ -47,17 +31,101 @@ instance RouteType MainPage where
         return $ MainPage []
 
 
+mainPageHtml :: IO String
+mainPageHtml = do
+    dir <- showDirectory "/"
+    dev <- updatePartitions
+    mnt <- updateMounts
+    html <- pageWithHostName (toHtmlTable (toPartitionTable dev) ++ toHtmlTable (toMountTable mnt))
+    return html
+
+
+mainPageHandler :: HttpRequest -> IO HttpResponse
+mainPageHandler request = do
+    html <- mainPageHtml
+    return $ generalResponse html
+
+
 mainPageMap :: String -> Maybe RouteItem
-mainPageMap path = Nothing
+mainPageMap path
+    | path == "" = Just $ RouteLeaf mainPageHandler
+    | path == "dev" = Just $ RouteNode devicePageMap
+    | path == "pkg" = Just $ RouteNode packagePageMap
+    | otherwise = Just $ RouteLeaf debugPageHandler
 
 
+-- pages for connected devices
+data DevicePage = DevicePage { deviceItems :: [Device] }
 
-mainSub :: String -> Maybe RouteItem
-mainSub s = Nothing
+instance RouteType DevicePage where
+    routeName dev = "dev"
+    routeKey dev = []
+    routeMap dev = RouteNode devicePageMap
+    updateType strs = do
+        return $ DevicePage []
 
 
-routeBase :: MainPage
-routeBase = MainPage []
+-- mounts and umounts devices
+queryAction :: Partition -> String -> IO ()
+queryAction dev query =
+    if (length query) > 0
+    then
+        if (last query) == '1'
+        then do
+            mountDevice dev ("/srv/storage/" ++ (strId dev))
+        else do
+            umountDevice ("/srv/storage/" ++ (strId dev))
+    else do
+        return ()
+
+
+-- use the mount location of the filesystem
+partitionPackageTable :: FilePath -> IO String
+partitionPackageTable path = do
+    dat <- loadPackageData path "statfile"
+    return $ toHtmlTable (toStorageTable dat)
+
+
+partitionInfoPage :: Partition -> IO String
+partitionInfoPage p = do
+    mnt <- updateMounts
+    let mnt_name = ("/dev/" ++ strId p) in
+        case (findMountName mnt mnt_name) of
+            Just m -> do
+                pkgs <- partitionPackageTable (mntPath m)
+                return ("<h3>" ++ mnt_name ++ " (" ++ (mntPath m) ++ ")</h3>" ++ formStr ++ pkgs)
+            Nothing -> do
+                return ("<h3>" ++ mnt_name ++ " (U)</h3>" ++ formStr)
+
+
+-- use the mount location of the filesystem
+devicePageBody :: String -> String -> IO String
+devicePageBody path query = do
+    dev <- updatePartitions
+    case (findPartitionName dev path) of
+        Nothing -> do
+            blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
+            return $ toHtmlTable (linesToHtml blks)
+        Just p -> do
+            queryAction p query
+            html <- partitionInfoPage p
+            return html
+
+
+devicePageHandler :: HttpRequest -> IO HttpResponse
+devicePageHandler request = do
+    body <- devicePageBody ((urlSplit request) !! 1) (query request)
+    html <- pageWithHostName body
+    return $ generalResponse html
+
+
+-- does not know which devices exist
+devicePageMap :: String -> Maybe RouteItem
+devicePageMap path = Just $ RouteLeaf devicePageHandler
+
+
+-- show available packages
+data PackagePage = PackagePage { packageItems :: [String] }
 
 
 -- open statfile in each device
@@ -81,87 +149,18 @@ packageTable name = do
     else do
         return $ showPackage pkgs name
 
--- use the mount location of the filesystem
-mountPackageTable :: FilePath -> IO String
-mountPackageTable path = do
-    dat <- loadPackageData path "statfile"
-    return $ toHtmlTable (toStorageTable dat)
+
+packagePageHandler :: HttpRequest -> IO HttpResponse
+packagePageHandler request = do
+    body <- packageTable (urlString request)
+    html <- pageWithHostName body
+    return $ generalResponse html
 
 
--- mounts and umounts devices
-queryAction :: Partition -> String -> IO ()
-queryAction dev query =
-    if (length query) > 0
-    then
-        if (last query) == '1'
-        then do
-            mountDevice dev ("/srv/storage/" ++ (strId dev))
-        else do
-            umountDevice ("/srv/storage/" ++ (strId dev))
-    else do
-        return ()
+-- does not know which packages exist
+packagePageMap :: String -> Maybe RouteItem
+packagePageMap path = Just $ RouteLeaf packagePageHandler
 
-
--- use the mount location of the filesystem
-deviceInfo :: String -> String -> IO String
-deviceInfo path query = do
-    dev <- updatePartitions
-    case (findPartitionName dev path) of
-        Nothing -> do
-            blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
-            return $ toHtmlTable (linesToHtml blks)
-        Just d -> do
-            queryAction d query
-            mnt <- updateMounts
-            let mnt_name = ("/dev/" ++ strId d) in
-                case (findMountName mnt mnt_name) of
-                    Just m -> do
-                        pkgs <- mountPackageTable (mntPath m)
-                        return ("<h3>" ++ mnt_name ++ " (" ++ (mntPath m) ++ ")</h3>" ++ formStr ++ pkgs)
-                    Nothing -> do
-                        return ("<h3>" ++ mnt_name ++ " (U)</h3>" ++ formStr)
-
-
--- match routes by regex from a file
-readRoute :: String -> IO RouteData
-readRoute url = do
-    filedata <- fileContent "routes"
-    return $ RouteData [url]
-
-
--- read kernel partition info
-deviceTable :: IO String
-deviceTable = do
-    dir <- showDirectory "/"
-    dev <- updatePartitions
-    mnt <- updateMounts
-    return $ (toHtmlTable (toPartitionTable dev) ++ toHtmlTable (toMountTable mnt))
-
--- change to HttpRequest -> IO HttpResponse?
-matchPattern :: String -> String -> IO String
-matchPattern str query = case str of
-    ('/':[]) -> deviceTable
-    ('/':'p':'k':'g':'/':path) -> packageTable path
-    ('/':'d':'e':'v':'/':path) -> deviceInfo path query
-    otherwise -> do return "Error"
-
--- unused
--- forms the html page content
-getPage :: String -> String -> IO String
-getPage path query = do
-    name <- getHostname
-    content <- matchPattern path query
-    return $ createPage name content
-
-
-responseHeader :: String -> String
-responseHeader content = ("HTTP/1.1 200 OK\nContent-Length: " ++ (show (length content)) ++ "\n\n")
-
--- should return HttpResponse
-getLocation :: String -> String -> IO String
-getLocation path query = do
-    content <- getPage path query
-    return (responseHeader content ++ content)
 
 
 
@@ -182,26 +181,6 @@ httpGetHandler routes hdl = do
                 hPutStrLn hdl (responseString response)
 
 
--- unused
-httpLine :: [String] -> IO String
-httpLine (verb:path:version:[]) =
-    let (file, query) = break (=='?') path in do
-        response <- getLocation file query
-        return response
-httpLine _ = do
-    return $ (makeResponseLine 400) ++ "\n\n"
-
-
-
--- unused respond to HTTP get
-getResponse :: Handle -> IO ()
-getResponse hdl = do
-    inpStr <- hGetLine hdl
-    response <- httpLine (words inpStr)
-    print $ words inpStr
-    hPutStrLn hdl response
-
-
 postResponse :: Handle -> IO ()
 postResponse hdl = do return ()
 
@@ -210,5 +189,16 @@ errorResponse :: Handle -> IO ()
 errorResponse hdl = do return ()
 
 
+routeBase :: MainPage
+routeBase = MainPage []
+
+
 replyFn :: Handle -> IO ()
 replyFn hdl = httpGetHandler (routeMap routeBase) hdl
+
+
+-- match routes by regex from a file
+readRoute :: String -> IO RouteData
+readRoute url = do
+    filedata <- fileContent "routes"
+    return $ RouteData [url]

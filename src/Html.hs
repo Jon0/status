@@ -1,6 +1,7 @@
 module Html where
 
 import Data.List
+import File
 
 
 htmlTag :: String -> String -> String
@@ -117,3 +118,9 @@ lineToHtml str = map labelHtml str
 
 linesToHtml :: [[String]] -> [[HtmlContent]]
 linesToHtml strs = (map lineToHtml strs)
+
+
+pageWithHostName :: String -> IO String
+pageWithHostName content = do
+    name <- getHostname
+    return $ createPage name content

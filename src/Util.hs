@@ -10,12 +10,27 @@ concatMaybe (x:xs) = case x of
     Nothing -> (concatMaybe xs)
 
 
+-- remove empty items from a list
+filterEmpty :: (Eq a) => [[a]] -> [[a]]
+filterEmpty list = filter (/=[]) list
+
+
 -- convert file arrays of lines and words
 splitLines :: String -> [[String]]
 splitLines str = map words (lines str)
 
 
--- split using delimiter
+-- split using delimiter removing empty strings
+wordSplit :: (Char -> Bool) -> String -> [String]
+wordSplit _ "" = []
+wordSplit d s =
+    let (a, b) = (break d s) in
+        if (length b) == 0
+        then []
+        else a : (wordDelim d (tail b))
+
+
+-- split using delimiter keeping empty strings
 wordDelim :: (Char -> Bool) -> String -> [String]
 wordDelim _ "" = []
 wordDelim d s =
