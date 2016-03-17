@@ -98,6 +98,11 @@ partitionInfoPage p = do
                 return ("<h3>" ++ mnt_name ++ " (U)</h3>" ++ formStr)
 
 
+partitionUrlToName :: String -> String
+partitionUrlToName url = b where
+    (a, b) = break (=='/') url
+
+
 -- use the mount location of the filesystem
 devicePageBody :: String -> String -> IO String
 devicePageBody path query = do
@@ -114,7 +119,7 @@ devicePageBody path query = do
 
 devicePageHandler :: HttpRequest -> IO HttpResponse
 devicePageHandler request = do
-    body <- devicePageBody ((urlSplit request) !! 1) (query request)
+    body <- devicePageBody (urlString request) (query request)
     html <- pageWithHostName body
     return $ generalResponse html
 
