@@ -57,7 +57,7 @@ partitionInfoPath :: Partition -> FilePath
 partitionInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show (minorId ds)))
 
 
--- transform the device table data
+-- transform the device table data to include links
 partMaps :: Int -> String -> String
 partMaps 3 str = htmlTagOpt "a" [("href=\"/dev/" ++ str ++ "\"")] str
 partMaps _ str = str

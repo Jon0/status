@@ -112,7 +112,6 @@ devicePageBody path query = do
     dev <- updatePartitions
     case (findPartitionName dev path) of
         Nothing -> do
-            print path
             blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
             return $ toHtmlTable (linesToHtml blks)
         Just p -> do
