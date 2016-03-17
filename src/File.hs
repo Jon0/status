@@ -17,9 +17,15 @@ showDirectory path = do
     return $ content
 
 
+fileErrorHandler :: IOException -> IO String
+fileErrorHandler e = do
+    print e
+    return ""
+
 -- does the file get closed?
 fileContent :: FilePath -> IO String
-fileContent filename = do
+fileContent filename =
+    handle (fileErrorHandler) $ do
     handle <- openFile filename ReadMode
     contents <- hGetContents handle
     return contents

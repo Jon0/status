@@ -58,8 +58,12 @@ firstHeaderLine (verb:path:version:[]) =
 firstHeaderLine _ = Nothing
 
 
+urlSplitString :: String -> [String]
+urlSplitString str = filterEmpty (wordDelim (=='/') str)
+
+
 urlSplit :: HttpRequest -> [String]
-urlSplit req = filterEmpty (wordDelim (=='/') (urlString req))
+urlSplit req = urlSplitString (urlString req)
 
 
 codeName :: Int -> String

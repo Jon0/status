@@ -99,8 +99,11 @@ partitionInfoPage p = do
 
 
 partitionUrlToName :: String -> String
-partitionUrlToName url = b where
-    (a, b) = break (=='/') url
+partitionUrlToName url =
+    let strs = urlSplitString url in
+        if length strs < 2
+        then ""
+        else strs !! 1
 
 
 -- use the mount location of the filesystem
@@ -109,6 +112,7 @@ devicePageBody path query = do
     dev <- updatePartitions
     case (findPartitionName dev path) of
         Nothing -> do
+            print path
             blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
             return $ toHtmlTable (linesToHtml blks)
         Just p -> do
@@ -119,7 +123,7 @@ devicePageBody path query = do
 
 devicePageHandler :: HttpRequest -> IO HttpResponse
 devicePageHandler request = do
-    body <- devicePageBody (urlString request) (query request)
+    body <- devicePageBody (partitionUrlToName (urlString request)) (query request)
     html <- pageWithHostName body
     return $ generalResponse html
 
