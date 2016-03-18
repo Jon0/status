@@ -28,10 +28,15 @@ getHostname :: IO String
 getHostname = fileContent "/etc/hostname"
 
 
+dotDirFilter :: String -> Bool
+dotDirFilter [] = False
+dotDirFilter (c:cs) = c /= '.'
+
+
 showDirectory :: FilePath -> IO [String]
 showDirectory path = do
     content <- getDirectoryContents path
-    return $ content
+    return $ filter dotDirFilter content
 
 
 -- only remove empty directories
@@ -40,12 +45,12 @@ removeEmptyDirectory path = do
     tryCommand ("rmdir " ++ path)
 
 
-removeAllEmptyDirectory :: [FilePath] -> IO ()
-removeAllEmptyDirectory [] = do
+removeAllEmptyDirectory :: FilePath -> [FilePath] -> IO ()
+removeAllEmptyDirectory _ [] = do
     return ()
-removeAllEmptyDirectory (p:ps) = do
-    removeEmptyDirectory p
-    removeAllEmptyDirectory ps
+removeAllEmptyDirectory base (p:ps) = do
+    removeEmptyDirectory (base ++ p)
+    removeAllEmptyDirectory base ps
 
 
 fileErrorHandler :: IOException -> IO String

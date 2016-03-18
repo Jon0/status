@@ -18,7 +18,7 @@ print_args = do
 clearMountDir :: IO ()
 clearMountDir = do
     dirs <- showDirectory mountPointDir
-    removeAllEmptyDirectory dirs
+    removeAllEmptyDirectory mountPointDir dirs
 
 
 main :: IO ()
