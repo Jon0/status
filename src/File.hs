@@ -33,8 +33,14 @@ dotDirFilter [] = False
 dotDirFilter (c:cs) = c /= '.'
 
 
+dirErrorHandler :: IOException -> IO [String]
+dirErrorHandler e = do
+    print e
+    return []
+
 showDirectory :: FilePath -> IO [String]
-showDirectory path = do
+showDirectory path =
+    handle (dirErrorHandler) $ do
     content <- getDirectoryContents path
     return $ filter dotDirFilter content
 
@@ -57,6 +63,7 @@ fileErrorHandler :: IOException -> IO String
 fileErrorHandler e = do
     print e
     return ""
+
 
 -- does the file get closed?
 fileContent :: FilePath -> IO String

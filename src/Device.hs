@@ -22,6 +22,9 @@ instance Table Partition where
     showLine ds = [(show (majorId ds)), (show (minorId ds)), (show (blocks ds)), (strId ds)]
 
 
+data PartOwner = PartOwner { partItem :: Partition, partOwner :: Maybe Partition }
+
+
 -- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
 
@@ -34,11 +37,44 @@ instance Table Mount where
 data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 
 
-data ManagedMount = ManagedMount { autoMount :: Bool, fsType :: String, fsName :: String }
+data ManagedMount = ManagedMount { autoMount :: Bool, devName :: String }
 
 
 -- collected relevant data about one device
-data Device = Device { devPart :: Partition, devMount :: Maybe ManagedMount }
+data Device = Device {
+    kName :: String,
+    pName :: String,
+    fsType :: String,
+    size :: String,
+    mPoint :: String,
+    uuId :: String
+}
+
+instance Renderable Device where
+    renderAll dev = [(deviceLink dev), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev))]
+    renderRow dev = renderDevice dev
+    staticUrl dev = Just $ ("/dev/" ++ (kName dev))
+
+deviceLink :: Device -> HtmlContent
+deviceLink dev = labelHtml $ htmlTagOpt "a" [("href=\"/dev/" ++ (kName dev) ++ "\"")] (kName dev)
+
+
+renderDevice :: Device -> HtmlContent
+renderDevice dev = deviceLink dev
+
+
+parseBlockDevice :: [String] -> Maybe Device
+parseBlockDevice (kn:pk:fs:sz:mt:uu:[]) =
+    Just $ Device kn pk fs sz mt uu
+parseBlockDevice _ = Nothing
+
+
+listBlockDevices :: IO [Device]
+listBlockDevices = do
+    parts <- updatePartitions
+    blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "uuid"]
+    return $ mapMaybe parseBlockDevice (tail blks)
+
 
 
 mountPointDir :: FilePath

@@ -6,6 +6,7 @@ import Document
 import File
 import Html
 import Http
+import List
 import Package
 import System
 import Template
@@ -34,10 +35,8 @@ instance RouteType MainPage where
 
 mainPageHtml :: IO String
 mainPageHtml = do
-    dir <- showDirectory "/"
-    dev <- updatePartitions
-    mnt <- updateMounts
-    html <- pageWithHostName (toHtmlTable (toPartitionTable dev) ++ toHtmlTable (toMountTable mnt))
+    dev <- listBlockDevices
+    html <- pageWithHostName (toHtml (renderList dev))
     return html
 
 

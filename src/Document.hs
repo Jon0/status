@@ -15,7 +15,8 @@ class Linked l where
 
 -- or use a renderable type containing all attributes
 class Renderable r where
-    render :: r -> IO HtmlContent
+    renderAll :: r -> [HtmlContent]
+    renderRow :: r -> HtmlContent
     staticUrl :: r -> Maybe String
 
 
