@@ -1,5 +1,7 @@
 import System.Environment
 import System.IO
+import Device
+import File
 import Route
 import Server
 
@@ -13,8 +15,15 @@ print_args = do
     return ()
 
 
+clearMountDir :: IO ()
+clearMountDir = do
+    dirs <- showDirectory mountPointDir
+    removeAllEmptyDirectory dirs
+
+
 main :: IO ()
 main = do
+    clearMountDir
     accept_loop replyFn
 
 get_string :: IO String

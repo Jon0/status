@@ -1,14 +1,12 @@
 module Device where
 
-import Data.List
 import Data.Maybe
-import System.Process
 import Text.Read
 import Document
 import File
 import Html
 import Package
-import Util
+
 
 -- a single block device
 data Partition = Partition { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
@@ -41,6 +39,13 @@ data ManagedMount = ManagedMount { autoMount :: Bool, fsType :: String, fsName :
 
 -- collected relevant data about one device
 data Device = Device { devPart :: Partition, devMount :: Maybe ManagedMount }
+
+
+mountPointDir :: FilePath
+mountPointDir = "/srv/storage/"
+
+defaultMountPoint :: Partition -> FilePath
+defaultMountPoint part = (mountPointDir ++ (strId part))
 
 
 --find device by name
@@ -117,29 +122,3 @@ mountsByPath :: FilePath -> IO MountPath
 mountsByPath path = do
     dirs <- showDirectory path
     return $ MountPath path (mapMaybe dirToMount (zip (cycle [path]) dirs))
-
-
--- command line actions
-tryCommand :: String -> IO ()
-tryCommand cmd = do
-    putStrLn cmd
-    ps <- runCommand cmd
-    code <- waitForProcess ps
-    putStrLn $ show code
-
-
-listBlock :: [String] -> IO [[String]]
-listBlock items = do
-    result <- readProcess "lsblk" ["-r", ("-o" ++ (intercalate "," items))] ""
-    return $ map allWords (lines result)
-
-
-
-mountDevice :: Partition -> FilePath -> IO ()
-mountDevice d p = do
-    tryCommand ("mkdir " ++ p)
-    tryCommand ("mount /dev/" ++ strId d ++ " " ++ p)
-
-
-umountDevice :: FilePath -> IO ()
-umountDevice p = tryCommand ("umount " ++ p)

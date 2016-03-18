@@ -1,9 +1,26 @@
 module File where
 
-
 import Control.Exception
-import System.IO
+import Data.List
 import System.Directory
+import System.Process
+import System.IO
+import Util
+
+
+-- command line actions
+tryCommand :: String -> IO ()
+tryCommand cmd = do
+    putStrLn cmd
+    ps <- runCommand cmd
+    code <- waitForProcess ps
+    putStrLn $ show code
+
+
+listBlock :: [String] -> IO [[String]]
+listBlock items = do
+    result <- readProcess "lsblk" ["-r", ("-o" ++ (intercalate "," items))] ""
+    return $ map allWords (lines result)
 
 
 -- return hostname
@@ -15,6 +32,20 @@ showDirectory :: FilePath -> IO [String]
 showDirectory path = do
     content <- getDirectoryContents path
     return $ content
+
+
+-- only remove empty directories
+removeEmptyDirectory :: FilePath -> IO ()
+removeEmptyDirectory path = do
+    tryCommand ("rmdir " ++ path)
+
+
+removeAllEmptyDirectory :: [FilePath] -> IO ()
+removeAllEmptyDirectory [] = do
+    return ()
+removeAllEmptyDirectory (p:ps) = do
+    removeEmptyDirectory p
+    removeAllEmptyDirectory ps
 
 
 fileErrorHandler :: IOException -> IO String
@@ -37,3 +68,15 @@ fileContent2 filename = do
             (hClose)
             (\hdl -> do contents <- hGetContents hdl; return contents)
     return $ Just str
+
+
+mountDevice :: FilePath -> FilePath -> IO ()
+mountDevice dev path = do
+    tryCommand ("mkdir " ++ path)
+    tryCommand ("mount " ++ dev ++ " " ++ path)
+
+
+umountDevice :: FilePath -> IO ()
+umountDevice path = do
+    tryCommand ("umount " ++ path)
+    removeEmptyDirectory path

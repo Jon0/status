@@ -73,9 +73,9 @@ queryAction dev query =
     then
         if (last query) == '1'
         then do
-            mountDevice dev ("/srv/storage/" ++ (strId dev))
+            mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dev)
         else do
-            umountDevice ("/srv/storage/" ++ (strId dev))
+            umountDevice (defaultMountPoint dev)
     else do
         return ()
 
@@ -150,7 +150,7 @@ showPackage pkg name = toHtmlTable (storageToHtml pkg)
 -- use all known devices and find by name
 packageTable :: String -> IO String
 packageTable name = do
-    mnts <- mountsByPath "/srv/storage"
+    mnts <- mountsByPath mountPointDir
     pkgs <- getAllPackages (deviceMounts mnts)
     if (length name) == 0
     then do
