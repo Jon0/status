@@ -14,6 +14,13 @@ htmlTagOpt tag opt item = ("<" ++ tag ++ " " ++ opts ++ ">" ++ item ++ "</" ++ t
     opts = (intercalate " " opt)
 
 
+htmlPair :: String -> String -> String
+htmlPair k v = k ++ "=\"" ++ v ++ "\""
+
+
+htmlRef :: String -> String
+htmlRef v = htmlPair "href" v
+
 -- transformable elements
 class HtmlElement e where
     toHtml :: e -> String
