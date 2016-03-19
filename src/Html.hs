@@ -37,14 +37,19 @@ instance HtmlElement HtmlContent where
 pack :: HtmlElement e => e -> HtmlContent
 pack = HtmlContent
 
+-- combines a series of content types
+joinContent :: [HtmlContent] -> String
+joinContent es = concat $ map toHtml es
+
 
 data HtmlDocument = HtmlDocument {
     header :: HtmlHeader,
-    content :: [HtmlContent]
+    body :: HtmlBody
 }
 
+
 instance HtmlElement HtmlDocument where
-    toHtml (HtmlDocument header objects) = ""
+    toHtml (HtmlDocument header body) = "<!DOCTYPE html>" ++ htmlTag "html" (toHtml header ++ toHtml body)
 
 
 -- header type
@@ -54,12 +59,19 @@ instance HtmlElement HtmlHeader where
     toHtml (HtmlHeader s) = htmlTag "head" (htmlTag "title" s)
 
 
+-- body type
+data HtmlBody = HtmlBody { htmlContent :: [HtmlContent] }
+
+instance HtmlElement HtmlBody where
+    toHtml (HtmlBody c) = htmlTag "body" (joinContent c)
+
 
 -- string type
 data HtmlString = HtmlString String
 
 instance HtmlElement HtmlString where
     toHtml (HtmlString s) = s
+
 
 -- heading type
 data Heading = Heading Int String
@@ -68,11 +80,19 @@ instance HtmlElement Heading where
     toHtml (Heading s h) = let st = show s in
         htmlTag ("h" ++ st) h
 
+createHtmlHeading :: Int -> String -> HtmlContent
+createHtmlHeading size str = HtmlContent (Heading size str)
+
+
 -- table type
 data HtmlTable = HtmlTable { tableContent :: [[HtmlContent]] }
 
 instance HtmlElement HtmlTable where
     toHtml t = toHtmlTable (tableContent t)
+
+
+createHtmlTable :: [[HtmlContent]] -> HtmlContent
+createHtmlTable ct = HtmlContent (HtmlTable ct)
 
 
 toHtmlTable :: [[HtmlContent]] -> String
@@ -97,27 +117,6 @@ labelHtml :: String -> HtmlContent
 labelHtml s = HtmlContent (HtmlString s)
 
 
-showElem :: (HtmlElement e) => [e] -> String
-showElem es = concat $ map toHtml es
-
-
-createHead :: String -> String
-createHead s = htmlTag "head" (htmlTag "title" s)
-
-
-createBody :: String -> String
-createBody s = htmlTag "body" s
-
-
-createPage :: String -> String -> String
-createPage name content = "<!DOCTYPE html>" ++ htmlTag "html" (createHead name ++ createBody content)
-
-
--- generate :: String -> [Element]
-template :: String -> [HtmlContent]
-template content = [pack (Heading 4 "Test"), pack (Heading 4 "123")]
-
-
 -- tables into html tables
 lineToHtml :: [String] -> [HtmlContent]
 lineToHtml str = map labelHtml str
@@ -127,7 +126,7 @@ linesToHtml :: [[String]] -> [[HtmlContent]]
 linesToHtml strs = (map lineToHtml strs)
 
 
-pageWithHostName :: String -> IO String
-pageWithHostName content = do
+pageWithHostName :: [HtmlContent] -> IO HtmlDocument
+pageWithHostName body = do
     name <- getHostname
-    return $ createPage name content
+    return $ HtmlDocument (HtmlHeader name) (HtmlBody body)

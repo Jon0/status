@@ -1,5 +1,7 @@
 module Template where
 
+import Html
+
 
 data Template = Static String | Dynamic String
 
@@ -21,7 +23,12 @@ dirTemplate items = concat $ map nameToLabel items
 
 
 -- example form
-formStr = unlines [
+formStr :: [HtmlContent]
+formStr = [(labelHtml testFormString)]
+
+
+testFormString :: String
+testFormString = unlines [
     "<form action=\"\" method=\"get\">",
     "<button name=\"mount\" value=\"0\">Unmount</button>",
     "<button name=\"mount\" value=\"1\">Mount</button>",

@@ -15,9 +15,14 @@ import Template
 
 debugPageHandler :: HttpRequest -> IO HttpResponse
 debugPageHandler request = do
-    html <- pageWithHostName (showRequest request)
-    return $ generalResponse html
+    html <- pageWithHostName [labelHtml (showRequest request)]
+    return $ generalResponse (toHtml html)
 
+
+filePageHandler :: HttpRequest -> IO HttpResponse
+filePageHandler request = do
+    html <- pageWithHostName [(createHtmlHeading 3 (showRequest request))]
+    return $ generalResponse (toHtml html)
 
 -- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
@@ -33,17 +38,11 @@ instance RouteType MainPage where
         return $ MainPage []
 
 
-mainPageHtml :: IO String
-mainPageHtml = do
-    dev <- listBlockDevices
-    html <- pageWithHostName (toHtml (renderList dev))
-    return html
-
-
 mainPageHandler :: HttpRequest -> IO HttpResponse
 mainPageHandler request = do
-    html <- mainPageHtml
-    return $ generalResponse html
+    dev <- listBlockDevices
+    html <- pageWithHostName ([(createHtmlHeading 1 "Devices")] ++ [(renderList dev)])
+    return $ generalResponse (toHtml html)
 
 
 mainPageMap :: String -> Maybe RouteItem
@@ -51,6 +50,7 @@ mainPageMap path
     | path == "" = Just $ RouteLeaf mainPageHandler
     | path == "dev" = Just $ RouteNode devicePageMap
     | path == "pkg" = Just $ RouteNode packagePageMap
+    | path == "file" = Just $ RouteLeaf filePageHandler
     | otherwise = Just $ RouteLeaf debugPageHandler
 
 
@@ -80,22 +80,23 @@ queryAction dev query =
 
 
 -- use the mount location of the filesystem
-partitionPackageTable :: FilePath -> IO String
+partitionPackageTable :: FilePath -> IO [HtmlContent]
 partitionPackageTable path = do
     dat <- loadPackageData path "statfile"
-    return $ toHtmlTable (toStorageTable dat)
+    return [(createHtmlTable (toStorageTable dat))]
 
 
-partitionInfoPage :: Partition -> IO String
+partitionInfoPage :: Partition -> IO [HtmlContent]
 partitionInfoPage p = do
     mnt <- updateMounts
     let mnt_name = ("/dev/" ++ strId p) in
         case (findMountName mnt mnt_name) of
             Just m -> do
                 pkgs <- partitionPackageTable (mntPath m)
-                return ("<h3>" ++ mnt_name ++ " (" ++ (mntPath m) ++ ")</h3>" ++ formStr ++ pkgs)
+                return (title ++ formStr ++ pkgs) where
+                    title = [(createHtmlHeading 3 (mnt_name ++ " (" ++ (mntPath m) ++ ")"))]
             Nothing -> do
-                return ("<h3>" ++ mnt_name ++ " (U)</h3>" ++ formStr)
+                return ([(createHtmlHeading 3 mnt_name)] ++ formStr)
 
 
 partitionUrlToName :: String -> String
@@ -107,13 +108,13 @@ partitionUrlToName url =
 
 
 -- use the mount location of the filesystem
-devicePageBody :: String -> String -> IO String
+devicePageBody :: String -> String -> IO [HtmlContent]
 devicePageBody path query = do
     dev <- updatePartitions
     case (findPartitionName dev path) of
         Nothing -> do
             blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
-            return $ toHtmlTable (linesToHtml blks)
+            return [(createHtmlTable (linesToHtml blks))]
         Just p -> do
             queryAction p query
             html <- partitionInfoPage p
@@ -124,7 +125,7 @@ devicePageHandler :: HttpRequest -> IO HttpResponse
 devicePageHandler request = do
     body <- devicePageBody (partitionUrlToName (urlString request)) (query request)
     html <- pageWithHostName body
-    return $ generalResponse html
+    return $ generalResponse (toHtml html)
 
 
 -- does not know which devices exist
@@ -137,17 +138,17 @@ data PackagePage = PackagePage { packageItems :: [String] }
 
 
 -- open statfile in each device
-showAllPackages :: [Package] -> String
-showAllPackages pkg = toHtmlTable (storageToHtml pkg)
+showAllPackages :: [Package] -> [HtmlContent]
+showAllPackages pkg = ([createHtmlTable (storageToHtml pkg)])
 
 
 -- filter a particular name
-showPackage :: [Package] -> String -> String
-showPackage pkg name = toHtmlTable (storageToHtml pkg)
+showPackage :: [Package] -> String -> [HtmlContent]
+showPackage pkg name = ([createHtmlTable (storageToHtml pkg)])
 
 
 -- use all known devices and find by name
-packageTable :: String -> IO String
+packageTable :: String -> IO [HtmlContent]
 packageTable name = do
     mnts <- mountsByPath mountPointDir
     pkgs <- getAllPackages (deviceMounts mnts)
@@ -162,7 +163,7 @@ packagePageHandler :: HttpRequest -> IO HttpResponse
 packagePageHandler request = do
     body <- packageTable (urlString request)
     html <- pageWithHostName body
-    return $ generalResponse html
+    return $ generalResponse (toHtml html)
 
 
 -- does not know which packages exist
