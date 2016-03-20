@@ -55,7 +55,7 @@ removeAllEmptyDirectory :: FilePath -> [FilePath] -> IO ()
 removeAllEmptyDirectory _ [] = do
     return ()
 removeAllEmptyDirectory base (p:ps) = do
-    removeEmptyDirectory (base ++ p)
+    removeEmptyDirectory (base ++ "/" ++ p)
     removeAllEmptyDirectory base ps
 
 

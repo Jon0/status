@@ -52,7 +52,7 @@ mainPageMap path
     | path == "" = Just $ RouteLeaf mainPageHandler
     | path == "dev" = Just $ RouteNode devicePageMap
     | path == "pkg" = Just $ RouteNode packagePageMap
-    | path == "file" = Just $ RouteLeaf filePageHandler
+    | path == "swc" = Just $ RouteLeaf filePageHandler
     | otherwise = Just $ RouteLeaf debugPageHandler
 
 
@@ -68,15 +68,15 @@ instance RouteType DevicePage where
 
 
 -- mounts and umounts devices
-queryAction :: Partition -> String -> IO ()
-queryAction dev query =
+queryAction :: FilePath -> Partition -> String -> IO ()
+queryAction dir dev query =
     if (length query) > 0
     then
         if (last query) == '1'
         then do
-            mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dev)
+            mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev)
         else do
-            umountDevice (defaultMountPoint dev)
+            umountDevice (defaultMountPoint dir dev)
     else do
         return ()
 
@@ -106,22 +106,22 @@ partitionUrlToName url = elemOrEmpty 1 (urlSplitString url)
 
 
 -- use the mount location of the filesystem
-devicePageBody :: String -> String -> IO [HtmlContent]
-devicePageBody path query = do
+devicePageBody :: FilePath -> String -> String -> IO [HtmlContent]
+devicePageBody dir path query = do
     dev <- updatePartitions
     case (findPartitionName dev path) of
         Nothing -> do
             blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
             return [(createHtmlTable (linesToHtml blks))]
         Just p -> do
-            queryAction p query
+            queryAction dir p query
             html <- partitionInfoPage p
             return html
 
 
 devicePageHandler :: HttpRequest -> IO HttpResponse
 devicePageHandler request = do
-    body <- devicePageBody (partitionUrlToName (urlString request)) (query request)
+    body <- devicePageBody "/srv" (partitionUrlToName (urlString request)) (query request)
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 
@@ -146,9 +146,9 @@ showPackage pkg name = ([createHtmlTable (storageToHtml pkg)])
 
 
 -- use all known devices and find by name
-packageTable :: String -> IO [HtmlContent]
-packageTable name = do
-    mnts <- mountsByPath mountPointDir
+packageTable :: FilePath -> String -> IO [HtmlContent]
+packageTable dir name = do
+    mnts <- mountsByPath (mountPointDir dir)
     pkgs <- getAllPackages (deviceMounts mnts)
     if (length name) == 0
     then do
@@ -159,7 +159,7 @@ packageTable name = do
 
 packagePageHandler :: HttpRequest -> IO HttpResponse
 packagePageHandler request = do
-    body <- packageTable (urlString request)
+    body <- packageTable "/srv" (urlString request)
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 

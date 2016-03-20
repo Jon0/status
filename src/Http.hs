@@ -7,11 +7,22 @@ import Util
 
 
 -- http types
-data HttpRequest = HttpRequest { urlString :: String, query :: String }
+data HttpVerb =
+    HttpGet
+    | HttpPost
+    | HttpPut
+    | HttpDelete
 
-data HttpResponse = HttpResponse { header :: [String], content :: String }
+data HttpRequest = HttpRequest {
+    reqVerb :: HttpVerb,
+    urlString :: String,
+    query :: String
+}
 
-data RouteContent = RouteContent { respondFn :: (HttpRequest -> IO HttpResponse) }
+data HttpResponse = HttpResponse {
+    header :: [String],
+    content :: String
+}
 
 -- either a content producer, or a link to one
 data RouteItem =
@@ -51,10 +62,21 @@ requestMatch routes req =
         Just fn -> Just $ fn req
 
 
+verbMatch :: String -> Maybe HttpVerb
+verbMatch str
+    | str == "GET" = Just HttpGet
+    | str == "POST" = Just HttpPost
+    | str == "PUT" = Just HttpPut
+    | str == "DELETE" = Just HttpDelete
+    | otherwise = Nothing
+
+
 firstHeaderLine :: [String] -> Maybe HttpRequest
 firstHeaderLine (verb:path:version:[]) =
-    let (file, query) = break (=='?') path in
-        Just $ HttpRequest file query
+    case (verbMatch verb) of
+        Just httpverb -> let (file, query) = break (=='?') path in
+            Just $ HttpRequest httpverb file query
+        Nothing -> Nothing
 firstHeaderLine _ = Nothing
 
 

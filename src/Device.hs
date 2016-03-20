@@ -2,6 +2,7 @@ module Device where
 
 import Data.Maybe
 import Text.Read
+import Config
 import Document
 import File
 import Html
@@ -77,11 +78,12 @@ listBlockDevices = do
 
 
 
-mountPointDir :: FilePath
-mountPointDir = "/srv/storage/"
+mountPointDir :: FilePath -> FilePath
+mountPointDir dir = dir ++ "/storage"
 
-defaultMountPoint :: Partition -> FilePath
-defaultMountPoint part = (mountPointDir ++ (strId part))
+
+defaultMountPoint :: FilePath -> Partition -> FilePath
+defaultMountPoint dir part = ((mountPointDir dir) ++ "/" ++  (strId part))
 
 
 --find device by name

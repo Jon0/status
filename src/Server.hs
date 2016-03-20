@@ -3,10 +3,12 @@ module Server where
 import Control.Concurrent
 import System.IO
 import Network.Socket
+import Config
+
 
 -- socket to listen on a port
-open_socket :: PortNumber -> IO Socket
-open_socket port = do
+openSocket :: PortNumber -> IO Socket
+openSocket port = do
     sock <- socket AF_INET Stream 0
     setSocketOption sock ReuseAddr 1
     bind sock (SockAddrInet port iNADDR_ANY)
@@ -14,12 +16,12 @@ open_socket port = do
     return sock
 
 
-main_loop :: (Handle -> IO ()) -> Socket -> IO ()
-main_loop handler sock = do
+mainLoop :: (Handle -> IO ()) -> Socket -> IO ()
+mainLoop handler sock = do
     putStrLn "Wait for connection..."
     connection <- accept sock
     forkIO (respond handler connection)
-    main_loop handler sock
+    mainLoop handler sock
 
 
 respond :: (Handle -> IO ()) -> (Socket, SockAddr) -> IO ()
@@ -37,7 +39,7 @@ respond2 (sock, _) = do
 
 
 -- opens port 8080 and applies handler to recieved connections
-accept_loop :: (Handle -> IO ()) -> IO ()
-accept_loop handler = do
-    sock <- open_socket 8080
-    main_loop handler sock
+acceptLoop :: Config -> (Handle -> IO ()) -> IO ()
+acceptLoop cfg handler = do
+    sock <- openSocket (hostPort cfg)
+    mainLoop handler sock
