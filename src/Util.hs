@@ -10,6 +10,13 @@ concatMaybe (x:xs) = case x of
     Nothing -> (concatMaybe xs)
 
 
+elemOrEmpty :: Int -> [[a]] -> [a]
+elemOrEmpty e s =
+    if 0 <= e && e < length s
+    then s !! e
+    else []
+
+
 -- remove empty items from a list
 filterEmpty :: (Eq a) => [[a]] -> [[a]]
 filterEmpty list = filter (/=[]) list

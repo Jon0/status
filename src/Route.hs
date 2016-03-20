@@ -10,7 +10,7 @@ import List
 import Package
 import System
 import Template
-
+import Util
 
 
 debugPageHandler :: HttpRequest -> IO HttpResponse
@@ -20,9 +20,11 @@ debugPageHandler request = do
 
 
 filePageHandler :: HttpRequest -> IO HttpResponse
-filePageHandler request = do
-    html <- pageWithHostName [(createHtmlHeading 3 (showRequest request))]
-    return $ generalResponse (toHtml html)
+filePageHandler request =
+    let filepath = defaultPrefix (elemOrEmpty 1 (urlSplit request)) in do
+        file <- fileContent filepath
+        return $ generalResponse file
+
 
 -- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
@@ -100,11 +102,7 @@ partitionInfoPage p = do
 
 
 partitionUrlToName :: String -> String
-partitionUrlToName url =
-    let strs = urlSplitString url in
-        if length strs < 2
-        then ""
-        else strs !! 1
+partitionUrlToName url = elemOrEmpty 1 (urlSplitString url)
 
 
 -- use the mount location of the filesystem

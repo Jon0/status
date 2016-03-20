@@ -92,3 +92,8 @@ umountDevice :: FilePath -> IO ()
 umountDevice path = do
     tryCommand ("umount " ++ path)
     removeEmptyDirectory path
+
+
+-- path to content files
+defaultPrefix :: String -> String
+defaultPrefix path = ("/srv/static/" ++ path)
