@@ -112,6 +112,13 @@ toPartitionTable :: [Partition] -> [[HtmlContent]]
 toPartitionTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (partToHtml ds)
 
 
+partToMountMaybe :: Partition -> IO (Maybe Mount)
+partToMountMaybe part = do
+    mnt <- updateMounts
+    let mnt_name = ("/dev/" ++ strId part) in do
+        return $ findMountName mnt mnt_name
+
+
 
 -- mounts to table
 toMountTable :: [Mount] -> [[HtmlContent]]

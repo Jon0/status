@@ -1,6 +1,7 @@
 module Route where
 
 import System.IO
+import Config
 import Device
 import Document
 import File
@@ -30,14 +31,21 @@ filePageHandler request =
 data RouteData = RouteData { routes :: [String] }
 
 
-data MainPage = MainPage { mainItems :: [String] }
+data MainPage = MainPage {
+    mainItems :: [String],
+    devPage :: DevicePage
+}
 
 instance RouteType MainPage where
     routeName main = "/"
     routeKey main = []
-    routeMap main = RouteNode mainPageMap
-    updateType strs = do
-        return $ MainPage []
+    routeMap main = RouteNode (mainPageMap main)
+
+
+createMainPage :: Config -> IO MainPage
+createMainPage cfg = do
+    devp <- createDevicePage cfg
+    return $ MainPage [] devp
 
 
 mainPageHandler :: HttpRequest -> IO HttpResponse
@@ -47,29 +55,36 @@ mainPageHandler request = do
     return $ generalResponse (toHtml html)
 
 
-mainPageMap :: String -> Maybe RouteItem
-mainPageMap path
+mainPageMap :: MainPage -> String -> Maybe RouteItem
+mainPageMap mainpage path
     | path == "" = Just $ RouteLeaf mainPageHandler
-    | path == "dev" = Just $ RouteNode devicePageMap
+    | path == "dev" = Just $ routeMap (devPage mainpage) --RouteNode devicePageMap
     | path == "pkg" = Just $ RouteNode packagePageMap
     | path == "swc" = Just $ RouteLeaf filePageHandler
     | otherwise = Just $ RouteLeaf debugPageHandler
 
 
 -- pages for connected devices
-data DevicePage = DevicePage { deviceItems :: [Device] }
+data DevicePage = DevicePage {
+    deviceDir :: FilePath,
+    partItems :: [Partition]
+}
 
 instance RouteType DevicePage where
     routeName dev = "dev"
     routeKey dev = []
-    routeMap dev = RouteNode devicePageMap
-    updateType strs = do
-        return $ DevicePage []
+    routeMap dev = RouteNode (devicePageMap dev)
+
+
+createDevicePage :: Config -> IO DevicePage
+createDevicePage cfg = do
+    parts <- updatePartitions
+    return $ DevicePage (contentPath cfg) parts
 
 
 -- mounts and umounts devices
-queryAction :: FilePath -> Partition -> String -> IO ()
-queryAction dir dev query =
+queryAction :: Partition -> FilePath -> String -> IO ()
+queryAction dev dir query =
     if (length query) > 0
     then
         if (last query) == '1'
@@ -88,51 +103,77 @@ partitionPackageTable path = do
     return [(createHtmlTable (toStorageTable dat))]
 
 
+-- use the mount location of the filesystem
 partitionInfoPage :: Partition -> IO [HtmlContent]
 partitionInfoPage p = do
-    mnt <- updateMounts
-    let mnt_name = ("/dev/" ++ strId p) in
-        case (findMountName mnt mnt_name) of
-            Just m -> do
-                pkgs <- partitionPackageTable (mntPath m)
-                return (title ++ formStr ++ pkgs) where
-                    title = [(createHtmlHeading 3 (mnt_name ++ " (" ++ (mntPath m) ++ ")"))]
-            Nothing -> do
-                return ([(createHtmlHeading 3 mnt_name)] ++ formStr)
+    mnt <- partToMountMaybe p
+    case mnt of
+        Just m -> do
+            pkgs <- partitionPackageTable (mntPath m)
+            return (title ++ formStr ++ pkgs) where
+                title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
+        Nothing -> do
+            return ([(createHtmlHeading 3 (strId p))] ++ formStr)
 
-
-partitionUrlToName :: String -> String
-partitionUrlToName url = elemOrEmpty 1 (urlSplitString url)
 
 
 -- use the mount location of the filesystem
-devicePageBody :: FilePath -> String -> String -> IO [HtmlContent]
-devicePageBody dir path query = do
-    dev <- updatePartitions
-    case (findPartitionName dev path) of
+partitionFilePage :: Partition -> IO [HtmlContent]
+partitionFilePage p = do
+    mnt <- partToMountMaybe p
+    case mnt of
+        Just m -> do
+            pkgs <- partitionPackageTable (mntPath m)
+            return title where
+                title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
         Nothing -> do
-            blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
-            return [(createHtmlTable (linesToHtml blks))]
-        Just p -> do
-            queryAction dir p query
-            html <- partitionInfoPage p
-            return html
+            return ([(createHtmlHeading 3 (strId p))])
 
 
-devicePageHandler :: HttpRequest -> IO HttpResponse
-devicePageHandler request = do
-    body <- devicePageBody "/srv" (partitionUrlToName (urlString request)) (query request)
+devicePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
+devicePageHandler part mountpath request = do
+    queryAction part mountpath (query request)
+    body <- partitionInfoPage part
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 
 
+deviceFilePageHandler :: Partition -> HttpRequest -> IO HttpResponse
+deviceFilePageHandler part request = do
+    body <- partitionFilePage part
+    html <- pageWithHostName body
+    return $ generalResponse (toHtml html)
+
+
+-- shows output of lsblk
+noDevicePageHandler :: HttpRequest -> IO HttpResponse
+noDevicePageHandler request = do
+    blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
+    html <- pageWithHostName [(createHtmlTable (linesToHtml blks))]
+    return $ generalResponse (toHtml html)
+
+
+
+partitionPageMap :: Partition -> FilePath -> String -> Maybe RouteItem
+partitionPageMap part mountpath path
+        | path == "files" = Just $ RouteLeaf (deviceFilePageHandler part)
+        | otherwise = Just $ RouteLeaf (devicePageHandler part mountpath)
+
+
 -- does not know which devices exist
-devicePageMap :: String -> Maybe RouteItem
-devicePageMap path = Just $ RouteLeaf devicePageHandler
+devicePageMap :: DevicePage -> String -> Maybe RouteItem
+devicePageMap devpage path =
+    case findPartitionName (partItems devpage) path of
+        Just p -> Just $ RouteNode (partitionPageMap p (deviceDir devpage))
+        Nothing -> Just $ RouteLeaf noDevicePageHandler
 
 
 -- show available packages
 data PackagePage = PackagePage { packageItems :: [String] }
+
+createPackagePage :: Config -> IO PackagePage
+createPackagePage cfg = do
+    return $ PackagePage []
 
 
 -- open statfile in each device
@@ -169,9 +210,6 @@ packagePageMap :: String -> Maybe RouteItem
 packagePageMap path = Just $ RouteLeaf packagePageHandler
 
 
-
-
-
 -- read and reply to a request, given a socket handle
 httpGetHandler :: RouteItem -> Handle -> IO ()
 httpGetHandler routes hdl = do
@@ -196,12 +234,10 @@ errorResponse :: Handle -> IO ()
 errorResponse hdl = do return ()
 
 
-routeBase :: MainPage
-routeBase = MainPage []
-
-
-replyFn :: Handle -> IO ()
-replyFn hdl = httpGetHandler (routeMap routeBase) hdl
+replyFn :: Config -> Handle -> IO ()
+replyFn cfg hdl = do
+    mainpage <- createMainPage cfg
+    httpGetHandler (routeMap mainpage) hdl
 
 
 -- match routes by regex from a file

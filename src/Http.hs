@@ -36,7 +36,6 @@ class RouteType r where
     routeName :: r -> String
     routeKey :: r -> [String]
     routeMap :: r -> RouteItem
-    updateType :: [String] -> IO r
 
 
 showRequest :: HttpRequest -> String

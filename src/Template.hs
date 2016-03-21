@@ -1,25 +1,17 @@
 module Template where
 
+import File
 import Html
 
 
-data Template = Static String | Dynamic String
+dirToLabel :: String -> HtmlContent
+dirToLabel text = createHtmlHeading 3 text
 
 
-template_file :: FilePath -> Template
-template_file path = Static "data"
-
-
-tmpl :: String -> String
-tmpl s = s
-
-
-nameToLabel :: String -> String
-nameToLabel name = ("<h3>" ++ name ++ "</h3>")
-
-
-dirTemplate :: [String] -> String
-dirTemplate items = concat $ map nameToLabel items
+dirTemplate :: FilePath -> IO [HtmlContent]
+dirTemplate path = do
+    content <- showDirectory path
+    return $ map dirToLabel content
 
 
 -- example form
@@ -38,8 +30,8 @@ testFormString = unlines [
 
 fileFormString :: String
 fileFormString = unlines [
-    "<form action=\"uploader\">"
-    "<input type=\"file\" name=\"testupload\">"
-    "<input type=\"submit\">"
+    "<form action=\"uploader\">",
+    "<input type=\"file\" name=\"testupload\">",
+    "<input type=\"submit\">",
     "</form>"
     ]

@@ -19,7 +19,7 @@ main = do
     args <- getArgs
     let cfg = (argsToConfig args) in do
         clearMountDir (contentPath cfg)
-        acceptLoop cfg replyFn
+        acceptLoop cfg (replyFn cfg)
 
 
 print_args :: IO ()
