@@ -123,9 +123,7 @@ partitionFilePage p = do
     mnt <- partToMountMaybe p
     case mnt of
         Just m -> do
-            pkgs <- partitionPackageTable (mntPath m)
-            return title where
-                title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
+            return dirTemplate (mntPath m)
         Nothing -> do
             return ([(createHtmlHeading 3 (strId p))])
 
