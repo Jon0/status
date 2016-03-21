@@ -123,7 +123,8 @@ partitionFilePage p = do
     mnt <- partToMountMaybe p
     case mnt of
         Just m -> do
-            return dirTemplate (mntPath m)
+            content <- dirTemplate (mntPath m)
+            return content
         Nothing -> do
             return ([(createHtmlHeading 3 (strId p))])
 
