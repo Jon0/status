@@ -34,3 +34,12 @@ testFormString = unlines [
     "<button name=\"mount\" value=\"1\">Mount</button>",
     "</form>"
     ]
+
+
+fileFormString :: String
+fileFormString = unlines [
+    "<form action=\"uploader\">"
+    "<input type=\"file\" name=\"testupload\">"
+    "<input type=\"submit\">"
+    "</form>"
+    ]
