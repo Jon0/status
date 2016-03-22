@@ -55,14 +55,11 @@ allFileContents prefix (p:ps) = do
     otherDirs <- allFileContents prefix ps
     if isDir
     then do
-        putStrLn ("dir " ++ (prefix ++ "/" ++ p))
-        ct <- showDirectory p
-        dirCont <- allFileContents prefix (prefixSet p ct)
-        putStrLn ("content " ++ (show dirCont))
+        ct <- showDirectory (prefix ++ "/" ++ p)
+        dirCont <- allFileContents prefix (prefixSet (p ++ "/") ct)
         return (dirCont ++ otherDirs)
     else do
-        putStrLn ("not dir " ++ (prefix ++ "/" ++ p))
-        return ([p] ++ otherDirs)
+        return (p : otherDirs)
 
 
 allSubFiles :: FilePath -> IO [FilePath]
