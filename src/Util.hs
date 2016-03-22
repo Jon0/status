@@ -10,6 +10,10 @@ concatMaybe (x:xs) = case x of
     Nothing -> (concatMaybe xs)
 
 
+prefixSet :: [a] -> [[a]] -> [[a]]
+prefixSet item (x:xs) = (item ++ x) : (prefixSet item xs)
+
+
 elemOrEmpty :: Int -> [[a]] -> [a]
 elemOrEmpty e s =
     if 0 <= e && e < length s

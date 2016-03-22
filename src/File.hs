@@ -38,12 +38,28 @@ dirErrorHandler e = do
     print e
     return []
 
-showDirectory :: FilePath -> IO [String]
+showDirectory :: FilePath -> IO [FilePath]
 showDirectory path =
     handle (dirErrorHandler) $ do
     content <- getDirectoryContents path
     return $ filter dotDirFilter content
 
+
+
+-- recursivly get all non-directory files
+allFileContents :: FilePath -> [FilePath] -> IO [FilePath]
+allFileContents prefix (p:ps) = do
+    isDir <- doesDirectoryExist (prefix ++ "/" ++ p)
+    if isDir
+    then do
+        ct <- showDirectory p
+        dirCont <- allFileContents prefix (prefixSet p ct)
+        dirs <- allFileContents prefix ps
+        return $ (dirCont ++ dirs)
+    else do
+        return [p]
+allFileContents _ _ = do
+    return []
 
 -- only remove empty directories
 removeEmptyDirectory :: FilePath -> IO ()

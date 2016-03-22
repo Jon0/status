@@ -2,6 +2,8 @@ module Package where
 
 
 import Data.List
+import Data.Maybe
+import System.Directory
 import Document
 import File
 import Html
@@ -81,3 +83,35 @@ findStores (d:devs) name =
     case (findPackageName (pkgData d) name) of
         Nothing -> findStores devs name
         Just p -> (p : findStores devs name)
+
+
+
+-- generate package data with mountpoint and subdirectory name
+generatePackage :: FilePath -> FilePath -> IO (Maybe Package)
+generatePackage prefix path = do
+    isDir <- doesDirectoryExist (prefix ++ "/" ++ path)
+    if isDir
+    then do
+        files <- allFileContents prefix [path]
+        return $ Just (Package path files)
+    else do
+        return Nothing
+
+
+
+generatePackageItems :: FilePath -> [FilePath] -> IO [Package]
+generatePackageItems prefix (x:xs) = do
+    pkg <- generatePackage prefix x
+    rest <- generatePackageItems prefix xs
+    case pkg of
+        Just p -> do
+            return ([p] ++ rest)
+        Nothing -> do
+            return rest
+
+
+generatePackages :: FilePath -> IO [Package]
+generatePackages path = do
+    items <- showDirectory path
+    pkgs <- generatePackageItems path items
+    return pkgs
