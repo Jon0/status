@@ -48,18 +48,31 @@ showDirectory path =
 
 -- recursivly get all non-directory files
 allFileContents :: FilePath -> [FilePath] -> IO [FilePath]
+allFileContents _ [] = do
+    return []
 allFileContents prefix (p:ps) = do
     isDir <- doesDirectoryExist (prefix ++ "/" ++ p)
+    otherDirs <- allFileContents prefix ps
     if isDir
     then do
         ct <- showDirectory p
         dirCont <- allFileContents prefix (prefixSet p ct)
-        dirs <- allFileContents prefix ps
-        return $ (dirCont ++ dirs)
+        return (dirCont ++ otherDirs)
     else do
-        return [p]
-allFileContents _ _ = do
-    return []
+        return ([p] ++ otherDirs)
+
+
+allSubFiles :: FilePath -> IO [FilePath]
+allSubFiles path = do
+    isDir <- doesDirectoryExist path
+    if isDir
+    then do
+        ct <- showDirectory path
+        dirCont <- allFileContents path ct
+        return dirCont
+    else do
+        return []
+
 
 -- only remove empty directories
 removeEmptyDirectory :: FilePath -> IO ()

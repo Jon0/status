@@ -10,8 +10,7 @@ dirToLabel text = createHtmlHeading 3 text
 
 dirTemplate :: FilePath -> IO [HtmlContent]
 dirTemplate path = do
-    content <- showDirectory path
-    allFiles <- allFileContents path content
+    allFiles <- allSubFiles path
     return $ map dirToLabel allFiles
 
 
