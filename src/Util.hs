@@ -11,6 +11,7 @@ concatMaybe (x:xs) = case x of
 
 
 prefixSet :: [a] -> [[a]] -> [[a]]
+prefixSet _ [] = []
 prefixSet item (x:xs) = (item ++ x) : (prefixSet item xs)
 
 
