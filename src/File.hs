@@ -3,9 +3,32 @@ module File where
 import Control.Exception
 import Data.List
 import System.Directory
+import System.FilePath
 import System.Process
 import System.IO
 import Util
+
+
+data FileStat = FileStat {
+    fileLocation :: FilePath,
+    fileName :: String,
+    isDirectory :: Bool
+}
+
+
+createFileStat :: FilePath -> IO FileStat
+createFileStat path = do
+    isDir <- doesDirectoryExist path
+    return $ FileStat loc name isDir where
+        loc = takeDirectory path
+        name = takeFileName path
+
+
+directoryContent :: FilePath -> IO [FileStat]
+directoryContent p = do
+    allFiles <- showDirectory p
+    list <- mapM createFileStat allFiles
+    return list
 
 
 -- command line actions

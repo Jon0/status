@@ -132,7 +132,7 @@ partitionFilePage part (pre, dir) = do
     case mnt of
         Just m -> do
             content <- dirTemplate (mntPath m) pre dir
-            return ([(generalTextForm "sort")] ++ content)
+            return content
         Nothing -> do
             return ([(createHtmlHeading 3 ((strId part) ++ " is not mounted"))])
 

@@ -4,16 +4,37 @@ import File
 import Html
 
 
-dirToLabel :: String -> HtmlContent
-dirToLabel text = createHtmlHeading 3 text
+
+dirStatusView :: FilePath -> FilePath -> [HtmlContent]
+dirStatusView ml dir = [title, br, mount, br, items] where
+    title = createHtmlHeading 1 dir
+    mount = createLabel ("Location: " ++ ml)
+    br = createBreak
+    items = generalForm "" [(generalButton "Sort" "sort" "1")]
+
+
+
+statToTableRow :: FilePath -> FileStat -> [HtmlContent]
+statToTableRow urlprefix stat = [name, isDir] where
+    name = labelHtml $ htmlTagOpt "a" [(htmlRef (urlprefix ++ (fileName stat)))] (fileName stat)
+    isDir = createLabel (show (isDirectory stat))
+
+
+-- create a file table
+dirContentView :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
+dirContentView mount url dir = do
+    allFiles <- directoryContent (mount ++ dir)
+    let items = createHtmlTable $ map (statToTableRow url) allFiles in do
+        return [title, items] where
+            title = createHtmlHeading 1 "Content"
 
 
 dirTemplate :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
 dirTemplate mount url dir = do
-    return [(createHtmlHeading 3 (mount ++ ", " ++ url ++ ", " ++ dir))]
-
-    --allFiles <- allSubFiles path
-    --return $ map dirToLabel allFiles
+    content <- dirContentView mount url dir
+    return (status ++ [br] ++ content) where
+        status = dirStatusView mount dir
+        br = createBreak
 
 
 generalForm :: String -> [HtmlContent] -> HtmlContent

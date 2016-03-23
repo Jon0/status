@@ -39,6 +39,10 @@ class Table rowType where
 data TableFile = TableFile { tablePath :: FilePath }
 
 
+tableToType :: (Table t) => ([String] -> [a]) -> [t] -> [[a]]
+tableToType fn tb = map (fn . showLine) tb
+
+
 toTable :: (Table t) => [[String]] -> [t]
 toTable tb = mapMaybe readLine tb
 

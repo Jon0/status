@@ -57,7 +57,7 @@ instance Renderable Device where
     staticUrl dev = Just $ ("/dev/" ++ (kName dev))
 
 deviceLink :: Device -> HtmlContent
-deviceLink dev = labelHtml $ htmlTagOpt "a" [("href=\"/dev/" ++ (kName dev) ++ "\"")] (kName dev)
+deviceLink dev = labelHtml $ htmlTagOpt "a" [(htmlRef (kName dev))] (kName dev)
 
 
 renderDevice :: Device -> HtmlContent
