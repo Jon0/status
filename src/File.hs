@@ -45,6 +45,9 @@ showDirectory path =
     return $ filter dotDirFilter content
 
 
+absolutePath :: [String] -> FilePath
+absolutePath strs = ("/" ++ (intercalate "/" strs))
+
 
 -- recursivly get all non-directory files
 allFileContents :: FilePath -> [FilePath] -> IO [FilePath]

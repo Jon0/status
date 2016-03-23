@@ -137,6 +137,12 @@ partitionFilePage part subdir = do
             return ([(createHtmlHeading 3 ((strId part) ++ " is not mounted"))])
 
 
+-- split directory from url
+deviceDirTarget :: HttpRequest -> (String, String)
+deviceDirTarget req = ((absolutePath (take 3 str)), (absolutePath (drop 3 str))) where
+    str = (urlSplit req)
+
+
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
 deviceFilePageHandler part subdir request = do
     body <- partitionFilePage part subdir
