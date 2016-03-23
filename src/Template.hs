@@ -3,6 +3,26 @@ module Template where
 import File
 import Html
 
+data DirectoryUrl = DirectoryUrl {
+    duMount :: FilePath,
+    duWebRoot :: FilePath,
+    duDirectory :: FilePath
+}
+
+
+noTrailingSlash :: FilePath -> FilePath
+noTrailingSlash p =
+    if last p == '/'
+    then init p
+    else p
+
+
+webLocation :: DirectoryUrl -> FilePath
+webLocation d = noTrailingSlash $ (duWebRoot d) ++ (duDirectory d)
+
+
+fsLocation :: DirectoryUrl -> FilePath
+fsLocation d = noTrailingSlash $ (duMount d) ++ (duDirectory d)
 
 
 dirStatusView :: FilePath -> FilePath -> [HtmlContent]
@@ -15,23 +35,23 @@ dirStatusView ml dir = [title, br, mount, br, items] where
 
 
 statToTableRow :: FilePath -> FileStat -> [HtmlContent]
-statToTableRow urlprefix stat = [name, isDir] where
-    name = labelHtml $ htmlTagOpt "a" [(htmlRef (urlprefix ++ (fileName stat)))] (fileName stat)
+statToTableRow webloc stat = [name, isDir] where
+    name = labelHtml $ htmlTagOpt "a" [(htmlRef (webloc ++ "/" ++ (fileName stat)))] (fileName stat)
     isDir = createLabel (show (isDirectory stat))
 
 
 -- create a file table
-dirContentView :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
-dirContentView mount url dir = do
-    allFiles <- directoryContent (mount ++ dir)
-    let items = createHtmlTable $ map (statToTableRow (url ++ dir ++ "/")) allFiles in do
+dirContentView :: DirectoryUrl -> IO [HtmlContent]
+dirContentView d = do
+    allFiles <- directoryContent (fsLocation d)
+    let items = createHtmlTable $ map (statToTableRow (webLocation d)) allFiles in do
         return [title, items] where
             title = createHtmlHeading 1 "Content"
 
 
 dirTemplate :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
 dirTemplate mount url dir = do
-    content <- dirContentView mount url dir
+    content <- dirContentView (DirectoryUrl mount url dir)
     return (status ++ [br] ++ content) where
         status = dirStatusView mount dir
         br = createBreak
