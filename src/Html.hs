@@ -4,22 +4,30 @@ import Data.List
 import File
 
 
+htmlTagOpen :: String -> [String] -> String
+htmlTagOpen tag [] = ("<" ++ tag ++ ">")
+htmlTagOpen tag opt = ("<" ++ tag ++ " " ++ opts ++ ">") where
+    opts = (intercalate " " opt)
+
+htmlTagClose :: String -> String
+htmlTagClose tag = ("</" ++ tag ++ ">")
+
+
 htmlTag :: String -> String -> String
 htmlTag tag item = htmlTagOpt tag [] item
 
 
 htmlTagOpt :: String -> [String] -> String -> String
-htmlTagOpt tag [] item = ("<" ++ tag ++ ">" ++ item ++ "</" ++ tag ++ ">")
-htmlTagOpt tag opt item = ("<" ++ tag ++ " " ++ opts ++ ">" ++ item ++ "</" ++ tag ++ ">") where
-    opts = (intercalate " " opt)
+htmlTagOpt tag opt item = ((htmlTagOpen tag opt) ++ item ++ (htmlTagClose tag))
 
 
-htmlPair :: String -> String -> String
-htmlPair k v = k ++ "=\"" ++ v ++ "\""
+htmlPair :: (String, String) -> String
+htmlPair (k, v) = k ++ "=\"" ++ v ++ "\""
 
 
 htmlRef :: String -> String
-htmlRef v = htmlPair "href" v
+htmlRef v = htmlPair ("href", v)
+
 
 -- transformable elements
 class HtmlElement e where
@@ -72,6 +80,10 @@ data HtmlString = HtmlString String
 instance HtmlElement HtmlString where
     toHtml (HtmlString s) = s
 
+createLabel :: String -> HtmlContent
+createLabel s = HtmlContent (HtmlString s)
+
+
 
 -- heading type
 data Heading = Heading Int String
@@ -110,11 +122,58 @@ toHtmlTableItem item = htmlTag "td" (toHtml item)
 
 
 -- form type
-data Form = Form { formElements :: [[String]] }
+data HtmlForm = HtmlForm {
+    formOpts :: [(String, String)],
+    formElements :: [HtmlContent]
+}
+
+instance HtmlElement HtmlForm where
+    toHtml form = htmlTagOpt "form" (map htmlPair (formOpts form)) (joinContent (formElements form))
 
 
+createForm :: [(String, String)] -> [HtmlContent] -> HtmlContent
+createForm o e = HtmlContent (HtmlForm o e)
+
+
+-- input elements
+data HtmlInput = HtmlInput {
+    inputOpts :: [(String, String)]
+}
+
+instance HtmlElement HtmlInput where
+    toHtml input = htmlTagOpen "input" $ map htmlPair (inputOpts input)
+
+createInput :: [(String, String)] -> HtmlContent
+createInput es = HtmlContent (HtmlInput es)
+
+
+-- button elements
+data HtmlButton = HtmlButton {
+    buttonLabel :: String,
+    buttonOpts :: [(String, String)]
+}
+
+instance HtmlElement HtmlButton where
+    toHtml bt = htmlTagOpt "button" (map htmlPair (buttonOpts bt)) (buttonLabel bt)
+
+createButton :: String -> [(String, String)] -> HtmlContent
+createButton lb es = HtmlContent (HtmlButton lb es)
+
+
+-- break elements
+data HtmlBreak = HtmlBreak
+
+instance HtmlElement HtmlBreak where
+    toHtml b = htmlTagOpen "br" []
+
+createBreak :: HtmlContent
+createBreak = HtmlContent HtmlBreak
+
+
+
+-- general functions
 labelHtml :: String -> HtmlContent
-labelHtml s = HtmlContent (HtmlString s)
+labelHtml s = createLabel s
 
 
 -- tables into html tables

@@ -14,24 +14,25 @@ dirTemplate path = do
     return $ map dirToLabel allFiles
 
 
--- example form
-formStr :: [HtmlContent]
-formStr = [(labelHtml testFormString)]
+generalForm :: String -> [HtmlContent] -> HtmlContent
+generalForm a e = createForm [("action", a), ("method", "get")] e
 
 
-testFormString :: String
-testFormString = unlines [
-    "<form action=\"\" method=\"get\">",
-    "<button name=\"mount\" value=\"0\">Unmount</button>",
-    "<button name=\"mount\" value=\"1\">Mount</button>",
-    "</form>"
-    ]
+generalButton :: String -> String -> String -> HtmlContent
+generalButton lb n v = createButton lb [("name", n), ("value", v)]
 
 
-fileFormString :: String
-fileFormString = unlines [
-    "<form action=\"uploader\">",
-    "<input type=\"file\" name=\"testupload\">",
-    "<input type=\"submit\">",
-    "</form>"
-    ]
+generalTextFeild :: String -> String -> [HtmlContent]
+generalTextFeild label name = [(createLabel label), (createInput [("type", "text"), ("name", name)]), (createBreak)]
+
+
+mountDeviceForm :: HtmlContent
+mountDeviceForm = generalForm "" [(generalButton "Unmount" "mount" "0"), (generalButton "Mount" "mount" "1")]
+
+
+fileUploadForm :: HtmlContent
+fileUploadForm = generalForm "upload" [(createInput [("type", "file"), ("name", "testupload")]), (createInput [("type", "submit")])]
+
+
+generalTextForm :: String -> HtmlContent
+generalTextForm name = generalForm name (generalTextFeild name name)

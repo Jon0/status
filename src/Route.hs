@@ -110,10 +110,10 @@ partitionInfoPage p = do
     case mnt of
         Just m -> do
             pkgs <- partitionPackageTable (mntPath m)
-            return (title ++ formStr ++ pkgs) where
+            return (title ++ [mountDeviceForm] ++ pkgs) where
                 title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
         Nothing -> do
-            return ([(createHtmlHeading 3 (strId p))] ++ formStr)
+            return ([(createHtmlHeading 3 (strId p))] ++ [mountDeviceForm])
 
 
 
@@ -132,9 +132,9 @@ partitionFilePage part subdir = do
     case mnt of
         Just m -> do
             content <- dirTemplate (mntPath m)
-            return content
+            return ([(generalTextForm "sort")] ++ content)
         Nothing -> do
-            return ([(createHtmlHeading 3 (strId part))])
+            return ([(createHtmlHeading 3 ((strId part) ++ " is not mounted"))])
 
 
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
