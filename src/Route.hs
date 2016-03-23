@@ -126,12 +126,12 @@ devicePageHandler part mountpath request = do
 
 
 -- use the mount location of the filesystem
-partitionFilePage :: Partition -> FilePath -> IO [HtmlContent]
-partitionFilePage part subdir = do
+partitionFilePage :: Partition -> (String, String) -> IO [HtmlContent]
+partitionFilePage part (pre, dir) = do
     mnt <- partToMountMaybe part
     case mnt of
         Just m -> do
-            content <- dirTemplate (mntPath m)
+            content <- dirTemplate (mntPath m) pre dir
             return ([(generalTextForm "sort")] ++ content)
         Nothing -> do
             return ([(createHtmlHeading 3 ((strId part) ++ " is not mounted"))])
@@ -145,7 +145,7 @@ deviceDirTarget req = ((absolutePath (take 3 str)), (absolutePath (drop 3 str)))
 
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
 deviceFilePageHandler part subdir request = do
-    body <- partitionFilePage part subdir
+    body <- partitionFilePage part (deviceDirTarget request)
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 

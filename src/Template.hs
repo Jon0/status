@@ -8,10 +8,12 @@ dirToLabel :: String -> HtmlContent
 dirToLabel text = createHtmlHeading 3 text
 
 
-dirTemplate :: FilePath -> IO [HtmlContent]
-dirTemplate path = do
-    allFiles <- allSubFiles path
-    return $ map dirToLabel allFiles
+dirTemplate :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
+dirTemplate mount url dir = do
+    return [(createHtmlHeading 3 (mount ++ ", " ++ url ++ ", " ++ dir))]
+
+    --allFiles <- allSubFiles path
+    --return $ map dirToLabel allFiles
 
 
 generalForm :: String -> [HtmlContent] -> HtmlContent
