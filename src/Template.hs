@@ -24,7 +24,7 @@ statToTableRow urlprefix stat = [name, isDir] where
 dirContentView :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
 dirContentView mount url dir = do
     allFiles <- directoryContent (mount ++ dir)
-    let items = createHtmlTable $ map (statToTableRow url) allFiles in do
+    let items = createHtmlTable $ map (statToTableRow (url ++ dir ++ "/")) allFiles in do
         return [title, items] where
             title = createHtmlHeading 1 "Content"
 
