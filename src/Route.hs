@@ -117,18 +117,6 @@ partitionInfoPage p = do
 
 
 
--- use the mount location of the filesystem
-partitionFilePage :: Partition -> IO [HtmlContent]
-partitionFilePage p = do
-    mnt <- partToMountMaybe p
-    case mnt of
-        Just m -> do
-            content <- dirTemplate (mntPath m)
-            return content
-        Nothing -> do
-            return ([(createHtmlHeading 3 (strId p))])
-
-
 devicePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
 devicePageHandler part mountpath request = do
     queryAction part mountpath (query request)
@@ -137,9 +125,21 @@ devicePageHandler part mountpath request = do
     return $ generalResponse (toHtml html)
 
 
-deviceFilePageHandler :: Partition -> HttpRequest -> IO HttpResponse
-deviceFilePageHandler part request = do
-    body <- partitionFilePage part
+-- use the mount location of the filesystem
+partitionFilePage :: Partition -> FilePath -> IO [HtmlContent]
+partitionFilePage part subdir = do
+    mnt <- partToMountMaybe part
+    case mnt of
+        Just m -> do
+            content <- dirTemplate (mntPath m)
+            return content
+        Nothing -> do
+            return ([(createHtmlHeading 3 (strId part))])
+
+
+deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
+deviceFilePageHandler part subdir request = do
+    body <- partitionFilePage part subdir
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 
@@ -155,7 +155,7 @@ noDevicePageHandler request = do
 
 partitionPageMap :: Partition -> FilePath -> String -> Maybe RouteItem
 partitionPageMap part mountpath path
-        | path == "files" = Just $ RouteLeaf (deviceFilePageHandler part)
+        | path == "files" = Just $ RouteLeaf (deviceFilePageHandler part mountpath)
         | otherwise = Just $ RouteLeaf (devicePageHandler part mountpath)
 
 
