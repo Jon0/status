@@ -36,7 +36,7 @@ strLinesToFiles _ = []
 
 
 strPartToPackage :: String -> [Package]
-strPartToPackage ('[':str) =
+strPartToPackage str =
         let (name, pkgs) = break (==']') str in
             [(Package name (strLinesToFiles pkgs))]
 strPartToPackage _ = []
