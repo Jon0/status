@@ -31,7 +31,7 @@ instance DocNode Storage where
 
 
 strLinesToFiles :: String -> [FilePath]
-strLinesToFiles (']':str) = lines str
+strLinesToFiles ('>':str) = lines str
 strLinesToFiles _ = []
 
 
