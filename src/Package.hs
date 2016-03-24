@@ -7,6 +7,7 @@ import System.Directory
 import Document
 import File
 import Html
+import Util
 
 
 data Package = Package { pkgName :: String, pkgFiles :: [FilePath] }
@@ -116,31 +117,15 @@ findStores (d:devs) name =
 
 
 -- generate package data with mountpoint and subdirectory name
-generatePackage :: FilePath -> FilePath -> IO (Maybe Package)
-generatePackage prefix path = do
-    isDir <- doesDirectoryExist (prefix ++ "/" ++ path)
-    if isDir
-    then do
-        files <- allFileContents prefix [path]
-        return $ Just (Package path files)
-    else do
-        return Nothing
+generatePackage :: FilePath -> IO Package
+generatePackage path = do
+    files <- allSubFiles path
+    return $ Package path files
 
 
-
-generatePackageItems :: FilePath -> [FilePath] -> IO [Package]
-generatePackageItems prefix (x:xs) = do
-    pkg <- generatePackage prefix x
-    rest <- generatePackageItems prefix xs
-    case pkg of
-        Just p -> do
-            return ([p] ++ rest)
-        Nothing -> do
-            return rest
-
-
+-- one package per subdirectory
 generatePackages :: FilePath -> IO [Package]
 generatePackages path = do
     items <- showDirectory path
-    pkgs <- generatePackageItems path items
+    pkgs <- mapM generatePackage (prefixSet (path ++ "/") items)
     return pkgs

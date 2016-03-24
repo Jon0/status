@@ -116,6 +116,7 @@ allFileContents prefix (p:ps) = do
         return (p : otherDirs)
 
 
+-- recursivly get all non-directory files
 allSubFiles :: FilePath -> IO [FilePath]
 allSubFiles path = do
     isDir <- doesDirectoryExist path
