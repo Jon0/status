@@ -116,12 +116,20 @@ findStores (d:devs) name =
         Just p -> (p : findStores devs name)
 
 
+replaceBrackets :: Char -> Char
+replaceBrackets '[' = '-'
+replaceBrackets ']' = '-'
+replaceBrackets c = c
+
+pathToPackageName :: FilePath -> String
+pathToPackageName path = map replaceBrackets (takeFileName path)
+
 
 -- generate package data with mountpoint and subdirectory name
 generatePackage :: FilePath -> IO Package
 generatePackage path = do
     files <- allSubFiles path
-    return $ Package (takeFileName path) files
+    return $ Package (pathToPackageName path) files
 
 
 -- one package per subdirectory
