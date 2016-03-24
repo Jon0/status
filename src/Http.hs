@@ -88,6 +88,9 @@ urlSplit :: HttpRequest -> [String]
 urlSplit req = urlSplitString (urlString req)
 
 
+subUrl :: Int -> HttpRequest -> String
+subUrl index request = intercalate "/" $ drop 1 (urlSplit request)
+
 -- split path into 2 parts
 breakRequest :: HttpRequest -> Int -> (String, String)
 breakRequest req index = ((absolutePath (take index str)), (absolutePath (drop index str))) where

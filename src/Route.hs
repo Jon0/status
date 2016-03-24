@@ -207,14 +207,14 @@ packageTable dir name = do
     pkgs <- getAllPackages (deviceMounts mnts)
     if (length name) == 0
     then let title = ("Packages (" ++ (show (length pkgs)) ++ ")") in do
-        return $ (createLabel title) : (showAllPackages pkgs)
+        return $ (createHtmlHeading 1 title) : (showAllPackages pkgs)
     else do
-        return $ (createLabel name) : (showPackage pkgs name)
+        return $ (createHtmlHeading 1 name) : (showPackage pkgs name)
 
 
 packagePageHandler :: HttpRequest -> IO HttpResponse
 packagePageHandler request = do
-    body <- packageTable "/srv" (urlString request)
+    body <- packageTable "/srv" (subUrl 1 request)
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 
