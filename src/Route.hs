@@ -125,27 +125,31 @@ devicePageHandler part mountpath request = do
     return $ generalResponse (toHtml html)
 
 
+
+partitionFileQuery :: DirectoryUrl -> String -> IO ()
+partitionFileQuery d s = do
+    putStrLn ((showDirectoryUrl d) ++ " -> " ++ s)
+    return ()
+
+
 -- use the mount location of the filesystem
-partitionFilePage :: Partition -> (String, String) -> IO [HtmlContent]
-partitionFilePage part (pre, dir) = do
+partitionFilePage :: Partition -> (String, String) -> String -> IO [HtmlContent]
+partitionFilePage part (pre, dir) query = do
     mnt <- partToMountMaybe part
     case mnt of
-        Just m -> do
-            content <- dirTemplate (mntPath m) pre dir
+        Just m -> let du = (DirectoryUrl (mntPath m) pre dir) in do
+            partitionFileQuery du query
+            content <- dirTemplate du
             return content
         Nothing -> do
             return ([(createHtmlHeading 3 ((strId part) ++ " is not mounted"))])
 
 
--- split directory from url
-deviceDirTarget :: HttpRequest -> (String, String)
-deviceDirTarget req = ((absolutePath (take 3 str)), (absolutePath (drop 3 str))) where
-    str = (urlSplit req)
 
-
+-- requests for file contents
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
 deviceFilePageHandler part subdir request = do
-    body <- partitionFilePage part (deviceDirTarget request)
+    body <- partitionFilePage part (breakRequest request 3) (query request)
     html <- pageWithHostName body
     return $ generalResponse (toHtml html)
 

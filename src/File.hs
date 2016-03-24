@@ -9,6 +9,34 @@ import System.IO
 import Util
 
 
+-- mapping from url paths to mount paths
+data DirectoryUrl = DirectoryUrl {
+    duMount :: FilePath,
+    duWebRoot :: FilePath,
+    duDirectory :: FilePath
+}
+
+
+noTrailingSlash :: FilePath -> FilePath
+noTrailingSlash p =
+    if last p == '/'
+    then init p
+    else p
+
+
+webLocation :: DirectoryUrl -> FilePath
+webLocation d = noTrailingSlash $ (duWebRoot d) ++ (duDirectory d)
+
+
+fsLocation :: DirectoryUrl -> FilePath
+fsLocation d = noTrailingSlash $ (duMount d) ++ (duDirectory d)
+
+
+showDirectoryUrl :: DirectoryUrl -> String
+showDirectoryUrl d = ("(" ++ (duMount d) ++ ", " ++ (duWebRoot d) ++ ", " ++ (duDirectory d) ++ ")")
+
+
+
 data FileStat = FileStat {
     fileLocation :: FilePath,
     fileName :: String,

@@ -3,6 +3,7 @@ module Http where
 import Data.List
 import Network.HTTP
 import Network.Stream
+import File
 import Util
 
 
@@ -85,6 +86,12 @@ urlSplitString str = filterEmpty (wordDelim (=='/') str)
 
 urlSplit :: HttpRequest -> [String]
 urlSplit req = urlSplitString (urlString req)
+
+
+-- split path into 2 parts
+breakRequest :: HttpRequest -> Int -> (String, String)
+breakRequest req index = ((absolutePath (take index str)), (absolutePath (drop index str))) where
+    str = (urlSplit req)
 
 
 codeName :: Int -> String

@@ -3,32 +3,11 @@ module Template where
 import File
 import Html
 
-data DirectoryUrl = DirectoryUrl {
-    duMount :: FilePath,
-    duWebRoot :: FilePath,
-    duDirectory :: FilePath
-}
 
-
-noTrailingSlash :: FilePath -> FilePath
-noTrailingSlash p =
-    if last p == '/'
-    then init p
-    else p
-
-
-webLocation :: DirectoryUrl -> FilePath
-webLocation d = noTrailingSlash $ (duWebRoot d) ++ (duDirectory d)
-
-
-fsLocation :: DirectoryUrl -> FilePath
-fsLocation d = noTrailingSlash $ (duMount d) ++ (duDirectory d)
-
-
-dirStatusView :: FilePath -> FilePath -> [HtmlContent]
-dirStatusView ml dir = [title, br, mount, br, items] where
-    title = createHtmlHeading 1 dir
-    mount = createLabel ("Location: " ++ ml)
+dirStatusView :: DirectoryUrl -> [HtmlContent]
+dirStatusView d = [title, br, mount, br, items] where
+    title = createHtmlHeading 1 (duDirectory d)
+    mount = createLabel ("Location: " ++ (duMount d))
     br = createBreak
     items = generalForm "" [(generalButton "Sort" "sort" "1")]
 
@@ -49,11 +28,11 @@ dirContentView d = do
             title = createHtmlHeading 1 "Content"
 
 
-dirTemplate :: FilePath -> FilePath -> FilePath -> IO [HtmlContent]
-dirTemplate mount url dir = do
-    content <- dirContentView (DirectoryUrl mount url dir)
+dirTemplate :: DirectoryUrl -> IO [HtmlContent]
+dirTemplate d = do
+    content <- dirContentView d
     return (status ++ [br] ++ content) where
-        status = dirStatusView mount dir
+        status = dirStatusView d
         br = createBreak
 
 
