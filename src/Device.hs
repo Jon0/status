@@ -140,6 +140,7 @@ getAllPackages [] = do
     return []
 getAllPackages (m:mnts) = do
     dat <- loadPackageData (mntPath m) "statfile"
+    putStrLn ((mntPath m) ++ (show (length (pkgData dat))))
     rpks <- getAllPackages mnts
     return $ (pkgData dat) ++ rpks
 
