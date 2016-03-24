@@ -36,10 +36,10 @@ strLinesToFiles _ = []
 
 
 strPartToPackage :: String -> [Package]
+strPartToPackage "" = []
 strPartToPackage str =
         let (name, pkgs) = break (==']') str in
             [(Package name (strLinesToFiles pkgs))]
-strPartToPackage _ = []
 
 
 strToPackages :: String -> [Package]
@@ -75,7 +75,7 @@ pathsToHtml p = HtmlContent (Heading 3 p)
 
 
 packageToHtml :: Package -> [HtmlContent]
-packageToHtml p = HtmlContent (Heading 3 (pkgName p)) : (map pathsToHtml (pkgFiles p))
+packageToHtml p = [(createLabel (pkgName p)), (createLabel (show (length (pkgFiles p))))]
 
 
 storageToHtml :: [Package] -> [[HtmlContent]]
