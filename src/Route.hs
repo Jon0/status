@@ -129,7 +129,12 @@ devicePageHandler part mountpath request = do
 partitionFileQuery :: DirectoryUrl -> String -> IO ()
 partitionFileQuery d s = do
     putStrLn ((showDirectoryUrl d) ++ " -> " ++ s)
-    return ()
+    if s == "?sort=1"
+    then do
+        pkgs <- generatePackages (fsLocation d)
+        createPackageDatabase ((duMount d) ++ "/statfile") pkgs
+    else do
+        return ()
 
 
 -- use the mount location of the filesystem

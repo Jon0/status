@@ -28,10 +28,44 @@ instance DocNode Storage where
 --        return $ zipWith () [0..] list
 
 
--- parsing functions
-lineToPackage :: String -> Package
-lineToPackage line = let (w:ws) = (words line) in
-    Package w ws
+strLinesToFiles :: String -> [FilePath]
+strLinesToFiles (']':str) = lines str
+strLinesToFiles _ = []
+
+
+strPartToPackage :: String -> [Package]
+strPartToPackage ('[':str) =
+        let (name, pkgs) = break (==']') str in
+            [(Package name (strLinesToFiles pkgs))]
+strPartToPackage _ = []
+
+
+strToPackages :: String -> [Package]
+strToPackages "" = []
+strToPackages str =
+    let (a, b) = break (=='[') str in
+        if null a
+        then (strToPackages (tail b))
+        else ((strPartToPackage a) ++ (strToPackages b))
+
+
+-- get packages stored on a single device
+loadPackageData :: String -> String -> IO Storage
+loadPackageData mount datafile = do
+    content <- fileContent (mount ++ "/" ++ datafile)
+    return $ Storage mount (strToPackages content)
+
+
+
+packageToStr :: Package -> String
+packageToStr pkg = ("[" ++ (pkgName pkg) ++ "]\n" ++ (intercalate "\n" (pkgFiles pkg)) ++ "\n\n")
+
+
+-- save to file
+createPackageDatabase :: FilePath -> [Package] -> IO ()
+createPackageDatabase path pkgs = do
+    writeFile path (concat (map packageToStr pkgs))
+
 
 
 pathsToHtml :: FilePath -> HtmlContent
@@ -58,11 +92,6 @@ toStorageTable :: Storage -> [[HtmlContent]]
 toStorageTable st =  (storageTableHeader st) : (storageToHtml (pkgData st))
 
 
--- get packages stored on a single device
-loadPackageData :: String -> String -> IO Storage
-loadPackageData mount datafile = do
-    content <- fileContent (mount ++ "/" ++ datafile)
-    return $ Storage mount (map lineToPackage (lines content))
 
 
 
