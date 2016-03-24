@@ -206,10 +206,10 @@ packageTable dir name = do
     mnts <- mountsByPath (mountPointDir dir)
     pkgs <- getAllPackages (deviceMounts mnts)
     if (length name) == 0
-    then do
-        return $ showAllPackages pkgs
+    then let title = ("Packages (" ++ (show (length pkgs)) ++ ")") in do
+        return $ (createLabel title) : (showAllPackages pkgs)
     else do
-        return $ showPackage pkgs name
+        return $ (createLabel name) : (showPackage pkgs name)
 
 
 packagePageHandler :: HttpRequest -> IO HttpResponse

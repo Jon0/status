@@ -4,6 +4,7 @@ module Package where
 import Data.List
 import Data.Maybe
 import System.Directory
+import System.FilePath
 import Document
 import File
 import Html
@@ -120,7 +121,7 @@ findStores (d:devs) name =
 generatePackage :: FilePath -> IO Package
 generatePackage path = do
     files <- allSubFiles path
-    return $ Package path files
+    return $ Package (takeFileName path) files
 
 
 -- one package per subdirectory
