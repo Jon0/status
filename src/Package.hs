@@ -38,14 +38,14 @@ strLinesToFiles _ = []
 strPartToPackage :: String -> [Package]
 strPartToPackage "" = []
 strPartToPackage str =
-        let (name, pkgs) = break (==']') str in
+        let (name, pkgs) = break (=='>') str in
             [(Package name (strLinesToFiles pkgs))]
 
 
 strToPackages :: String -> [Package]
 strToPackages "" = []
 strToPackages str =
-    let (a, b) = break (=='[') str in
+    let (a, b) = break (=='<') str in
         if null a
         then (strToPackages (tail b))
         else ((strPartToPackage a) ++ (strToPackages b))
@@ -60,7 +60,7 @@ loadPackageData mount datafile = do
 
 
 packageToStr :: Package -> String
-packageToStr pkg = ("[" ++ (pkgName pkg) ++ "]\n" ++ (intercalate "\n" (pkgFiles pkg)) ++ "\n\n")
+packageToStr pkg = ("<" ++ (pkgName pkg) ++ ">\n" ++ (intercalate "\n" (pkgFiles pkg)) ++ "\n\n")
 
 
 -- save to file
@@ -117,9 +117,10 @@ findStores (d:devs) name =
 
 
 replaceBrackets :: Char -> Char
-replaceBrackets '[' = '-'
-replaceBrackets ']' = '-'
+replaceBrackets '<' = '-'
+replaceBrackets '>' = '-'
 replaceBrackets c = c
+
 
 pathToPackageName :: FilePath -> String
 pathToPackageName path = map replaceBrackets (takeFileName path)
