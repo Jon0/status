@@ -111,8 +111,9 @@ partitionInfoPage p = do
     case mnt of
         Just m -> do
             pkgs <- partitionPackageTable (mntPath m)
-            return (title ++ [mountDeviceForm] ++ pkgs) where
+            return (title ++ [mountDeviceForm] ++ filelink ++ pkgs) where
                 title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
+                filelink = [(generalHref "Browse Files" ("/dev/" ++ (strId p) ++ "/files"))]
         Nothing -> do
             return ([(createHtmlHeading 3 (strId p))] ++ [mountDeviceForm])
 

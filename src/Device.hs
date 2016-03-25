@@ -7,6 +7,7 @@ import Document
 import File
 import Html
 import Package
+import Template
 
 
 -- a single block device
@@ -57,7 +58,7 @@ instance Renderable Device where
     staticUrl dev = Just $ ("/dev/" ++ (kName dev))
 
 deviceLink :: Device -> HtmlContent
-deviceLink dev = labelHtml $ htmlTagOpt "a" [(htmlRef ("/dev/" ++ (kName dev)))] (kName dev)
+deviceLink dev = generalHref (kName dev) ("/dev/" ++ (kName dev))
 
 
 renderDevice :: Device -> HtmlContent
@@ -102,7 +103,7 @@ partitionInfoPath ds = ("/sys/dev/block/" ++ (show (majorId ds)) ++ ":" ++ (show
 
 -- transform the device table data to include links
 partMaps :: Int -> String -> String
-partMaps 3 str = htmlTagOpt "a" [(htmlRef ("/dev/" ++ str))] str
+partMaps 3 str = toHtml (generalHref str ("/dev/" ++ str))
 partMaps _ str = str
 
 partToHtml :: [Partition] -> [[HtmlContent]]

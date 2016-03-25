@@ -36,6 +36,10 @@ dirTemplate d = do
         br = createBreak
 
 
+generalHref :: String -> String -> HtmlContent
+generalHref label link = labelHtml $ htmlTagOpt "a" [(htmlRef link)] label
+
+
 generalForm :: String -> [HtmlContent] -> HtmlContent
 generalForm a e = createForm [("action", a), ("method", "get")] e
 
