@@ -149,7 +149,7 @@ partitionFileToContent part du query = do
         html <- pageWithHostName content
         return $ toHtml html
     else do
-        content <- readFile (fsLocation du)
+        content <- fileContent (fsLocation du)
         return content
 
 

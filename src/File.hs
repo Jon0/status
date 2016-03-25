@@ -154,6 +154,7 @@ fileContent :: FilePath -> IO String
 fileContent filename =
     handle (fileErrorHandler) $ do
     handle <- openFile filename ReadMode
+    hSetBinaryMode handle True
     contents <- hGetContents handle
     return contents
 
