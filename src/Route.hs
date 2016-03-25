@@ -1,5 +1,6 @@
 module Route where
 
+import System.Directory
 import System.IO
 import Config
 import Device
@@ -125,7 +126,7 @@ devicePageHandler part mountpath request = do
     return $ generalResponse (toHtml html)
 
 
-
+-- generate file database
 partitionFileQuery :: DirectoryUrl -> String -> IO ()
 partitionFileQuery d s = do
     putStrLn ((showDirectoryUrl d) ++ " -> " ++ s)
@@ -137,26 +138,33 @@ partitionFileQuery d s = do
         return ()
 
 
--- use the mount location of the filesystem
-partitionFilePage :: Partition -> (String, String) -> String -> IO [HtmlContent]
-partitionFilePage part (pre, dir) query = do
-    mnt <- partToMountMaybe part
-    case mnt of
-        Just m -> let du = (DirectoryUrl (mntPath m) pre dir) in do
-            partitionFileQuery du query
-            content <- dirTemplate du
-            return content
-        Nothing -> do
-            return ([(createHtmlHeading 3 ((strId part) ++ " is not mounted"))])
-
+-- return generated directory view or a file
+partitionFileToContent :: Partition -> DirectoryUrl -> String -> IO String
+partitionFileToContent part du query = do
+    isDir <- doesDirectoryExist (fsLocation du)
+    if isDir
+    then do
+        partitionFileQuery du query
+        content <- dirTemplate du
+        html <- pageWithHostName content
+        return $ toHtml html
+    else do
+        content <- fileContent (fsLocation du)
+        return content
 
 
 -- requests for file contents
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
 deviceFilePageHandler part subdir request = do
-    body <- partitionFilePage part (breakRequest request 3) (query request)
-    html <- pageWithHostName body
-    return $ generalResponse (toHtml html)
+    mnt <- partToMountMaybe part
+    case mnt of
+        Just m -> let (u, d) = (breakRequest request 3) in
+                    let du = (DirectoryUrl (mntPath m) u d) in do
+                        str <- partitionFileToContent part du (query request)
+                        return $ generalResponse str
+        Nothing -> do
+            html <- pageWithHostName [(createHtmlHeading 3 ((strId part) ++ " is not mounted"))]
+            return $ generalResponse (toHtml html)
 
 
 -- shows output of lsblk
