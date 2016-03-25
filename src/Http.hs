@@ -1,8 +1,10 @@
 module Http where
 
+import Data.Char
 import Data.List
 import Network.HTTP
 import Network.Stream
+import Numeric
 import File
 import Util
 
@@ -80,12 +82,26 @@ firstHeaderLine (verb:path:version:[]) =
 firstHeaderLine _ = Nothing
 
 
+urlChar :: String -> String
+urlChar ('%':xs) =
+    [(chr c)] where
+        (c, n) = head (readHex xs)
+urlChar _ = ""
+
+
+-- replace symbols in url
+urlReplace :: String -> String
+urlReplace "" = ""
+urlReplace url = let (a, b) = break (=='%') url in
+    a ++ (urlChar (take 3 b)) ++ (urlReplace (drop 3 b))
+
+
 urlSplitString :: String -> [String]
 urlSplitString str = filterEmpty (wordDelim (=='/') str)
 
 
 urlSplit :: HttpRequest -> [String]
-urlSplit req = urlSplitString (urlString req)
+urlSplit req = urlSplitString (urlReplace (urlString req))
 
 
 subUrl :: Int -> HttpRequest -> String
