@@ -13,9 +13,9 @@ dirStatusView d = [title, br, mount, br, items] where
 
 
 
-statToTableRow :: FilePath -> FileStat -> [HtmlContent]
-statToTableRow webloc stat = [name, isDir] where
-    name = labelHtml $ htmlTagOpt "a" [(htmlRef (webloc ++ "/" ++ (fileName stat)))] (fileName stat)
+statToTableRow :: DirectoryUrl -> FileStat -> [HtmlContent]
+statToTableRow d stat = [name, isDir] where
+    name = labelHtml $ htmlTagOpt "a" [(htmlRef ((webLocation d) ++ "/" ++ (fileName stat)))] (fileName stat)
     isDir = createLabel (show (isDirectory stat))
 
 
@@ -23,7 +23,7 @@ statToTableRow webloc stat = [name, isDir] where
 dirContentView :: DirectoryUrl -> IO [HtmlContent]
 dirContentView d = do
     allFiles <- directoryContent (fsLocation d)
-    let items = createHtmlTable $ map (statToTableRow (webLocation d)) allFiles in do
+    let items = createHtmlTable $ map (statToTableRow d) allFiles in do
         return [title, items] where
             title = createHtmlHeading 1 "Content"
 

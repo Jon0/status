@@ -55,7 +55,7 @@ createFileStat path = do
 directoryContent :: FilePath -> IO [FileStat]
 directoryContent p = do
     allFiles <- showDirectory p
-    list <- mapM createFileStat allFiles
+    list <- mapM createFileStat (prefixSet (p ++ "/") allFiles)
     return list
 
 
