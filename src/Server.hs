@@ -5,6 +5,9 @@ import System.IO
 import Network.Socket
 import Config
 
+-- a set of open connections
+data SocketSet = SocketSet { socketHandles :: [Handle] }
+
 
 -- socket to listen on a port
 openSocket :: PortNumber -> IO Socket
