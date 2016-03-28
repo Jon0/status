@@ -155,6 +155,7 @@ fileContent filename =
     handle (fileErrorHandler) $ do
     handle <- openFile filename ReadMode
     hSetBinaryMode handle True
+    hSetBuffering handle NoBuffering
     contents <- hGetContents handle
     return contents
 
