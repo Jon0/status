@@ -15,17 +15,17 @@ import Template
 import Util
 
 
-debugPageHandler :: HttpRequest -> IO HttpResponse
+debugPageHandler :: HttpRequest -> IO HttpResponseHandler
 debugPageHandler request = do
     html <- pageWithHostName [labelHtml (showRequest request)]
-    return $ generalResponse (toHtml html)
+    return $ HttpResponseHandler (generalResponse (toHtml html)) []
 
 
-filePageHandler :: HttpRequest -> IO HttpResponse
+filePageHandler :: HttpRequest -> IO HttpResponseHandler
 filePageHandler request =
     let filepath = defaultPrefix (elemOrEmpty 1 (urlSplit request)) in do
-        file <- fileContent filepath
-        return $ generalResponse file
+        (file, hdls) <- contentHandle filepath
+        return $ HttpResponseHandler (generalResponse file) hdls
 
 
 -- a data file containing route information
@@ -49,11 +49,11 @@ createMainPage cfg = do
     return $ MainPage [] devp
 
 
-mainPageHandler :: HttpRequest -> IO HttpResponse
+mainPageHandler :: HttpRequest -> IO HttpResponseHandler
 mainPageHandler request = do
     dev <- listBlockDevices
     html <- pageWithHostName ([(createHtmlHeading 1 "Devices")] ++ [(renderList dev)])
-    return $ generalResponse (toHtml html)
+    return $ HttpResponseHandler (generalResponse (toHtml html)) []
 
 
 mainPageMap :: MainPage -> String -> Maybe RouteItem
@@ -119,12 +119,12 @@ partitionInfoPage p = do
 
 
 
-devicePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
+devicePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponseHandler
 devicePageHandler part mountpath request = do
     queryAction part mountpath (query request)
     body <- partitionInfoPage part
     html <- pageWithHostName body
-    return $ generalResponse (toHtml html)
+    return $ HttpResponseHandler (generalResponse (toHtml html)) []
 
 
 -- generate file database
@@ -155,25 +155,25 @@ partitionFileToContent part du query = do
 
 
 -- requests for file contents
-deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponse
+deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponseHandler
 deviceFilePageHandler part subdir request = do
     mnt <- partToMountMaybe part
     case mnt of
         Just m -> let (u, d) = (breakRequest request 3) in
                     let du = (DirectoryUrl (mntPath m) u d) in do
                         str <- partitionFileToContent part du (query request)
-                        return $ generalResponse str
+                        return $ HttpResponseHandler (generalResponse str) []
         Nothing -> do
             html <- pageWithHostName [(createHtmlHeading 3 ((strId part) ++ " is not mounted"))]
-            return $ generalResponse (toHtml html)
+            return $ HttpResponseHandler (generalResponse (toHtml html)) []
 
 
 -- shows output of lsblk
-noDevicePageHandler :: HttpRequest -> IO HttpResponse
+noDevicePageHandler :: HttpRequest -> IO HttpResponseHandler
 noDevicePageHandler request = do
     blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
     html <- pageWithHostName [(createHtmlTable (linesToHtml blks))]
-    return $ generalResponse (toHtml html)
+    return $ HttpResponseHandler (generalResponse (toHtml html)) []
 
 
 
@@ -221,11 +221,11 @@ packageTable dir name = do
         return $ (createHtmlHeading 1 name) : (showPackage pkgs name)
 
 
-packagePageHandler :: HttpRequest -> IO HttpResponse
+packagePageHandler :: HttpRequest -> IO HttpResponseHandler
 packagePageHandler request = do
     body <- packageTable "/srv" (subUrl 1 request)
     html <- pageWithHostName body
-    return $ generalResponse (toHtml html)
+    return $ HttpResponseHandler (generalResponse (toHtml html)) []
 
 
 -- does not know which packages exist
@@ -246,7 +246,8 @@ httpGetHandler routes hdl = do
                 hPutStrLn hdl ((makeResponseLine 404) ++ "\n\n")
             Just out -> do
                 response <- out
-                hPutStrLn hdl (responseString response)
+                hPutStrLn hdl (responseString (responseData response))
+                closeHandles (dependentHandles response)
 
 
 postResponse :: Handle -> IO ()

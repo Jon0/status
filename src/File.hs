@@ -17,6 +17,14 @@ data DirectoryUrl = DirectoryUrl {
 }
 
 
+closeHandles :: [Handle] -> IO ()
+closeHandles [] = do
+    return ()
+closeHandles (h:hs) = do
+    hClose h
+    closeHandles hs
+
+
 noTrailingSlash :: FilePath -> FilePath
 noTrailingSlash p =
     if last p == '/'
@@ -143,21 +151,29 @@ removeAllEmptyDirectory base (p:ps) = do
     removeAllEmptyDirectory base ps
 
 
-fileErrorHandler :: IOException -> IO String
+fileErrorHandler :: IOException -> IO (String, [Handle])
 fileErrorHandler e = do
     print e
-    return ""
+    return ("", [])
 
 
--- does the file get closed?
-fileContent :: FilePath -> IO String
-fileContent filename =
+contentHandle :: FilePath -> IO (String, [Handle])
+contentHandle filename =
     handle (fileErrorHandler) $ do
     handle <- openFile filename ReadMode
     hSetBinaryMode handle True
     hSetBuffering handle NoBuffering
     contents <- hGetContents handle
-    return contents
+    return (contents, [handle])
+
+
+-- use contentHandle instead to close files
+fileContent :: FilePath -> IO String
+fileContent filename = do
+    (c, h) <- contentHandle filename
+    return c
+
+
 
 
 fileContent2 :: FilePath -> IO (Maybe String)

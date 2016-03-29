@@ -4,6 +4,7 @@ import Data.Char
 import Data.List
 import Network.HTTP
 import Network.Stream
+import System.IO
 import Numeric
 import File
 import Util
@@ -27,9 +28,14 @@ data HttpResponse = HttpResponse {
     content :: String
 }
 
+data HttpResponseHandler = HttpResponseHandler {
+    responseData :: HttpResponse,
+    dependentHandles :: [Handle]
+}
+
 -- either a content producer, or a link to one
 data RouteItem =
-    RouteLeaf (HttpRequest -> IO HttpResponse)
+    RouteLeaf (HttpRequest -> IO HttpResponseHandler)
     | RouteNode (String -> Maybe RouteItem)
 
 
@@ -46,7 +52,7 @@ showRequest request = ((show (urlSplit request)) ++ "\n" ++ (query request) ++ "
 
 
 -- matches path to content producer
-routeMatch :: RouteItem -> [String] -> Maybe (HttpRequest -> IO HttpResponse)
+routeMatch :: RouteItem -> [String] -> Maybe (HttpRequest -> IO HttpResponseHandler)
 routeMatch (RouteLeaf c) _ = Just $ c
 routeMatch (RouteNode n) [] = case (n "") of
     Nothing -> Nothing
@@ -57,7 +63,7 @@ routeMatch (RouteNode n) path = case (n (head path)) of
 
 
 -- similiar to route match
-requestMatch :: RouteItem -> HttpRequest -> Maybe (IO HttpResponse)
+requestMatch :: RouteItem -> HttpRequest -> Maybe (IO HttpResponseHandler)
 requestMatch routes req =
     case (routeMatch routes (urlSplit req)) of
         Nothing -> Nothing
@@ -134,7 +140,6 @@ generalResponse content = (HttpResponse header content) where
 
 responseString :: HttpResponse -> String
 responseString r = ((intercalate "\n" (header r)) ++ "\n\n" ++ (content r))
-
 
 -- unused
 type RequestHandler = Request_String -> IO Response_String
