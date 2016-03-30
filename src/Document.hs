@@ -47,10 +47,10 @@ toTable :: (Table t) => [[String]] -> [t]
 toTable tb = mapMaybe readLine tb
 
 
-readTable :: (Table t) => FilePath -> IO [t]
+readTable :: (Table t) => FilePath -> IO ([t], [Handle])
 readTable path = do
-    prt <- fileContent path
-    return $ toTable (splitLines prt)
+    (prt, hdl) <- contentHandle path
+    return $ ((toTable (splitLines prt)), hdl)
 
 
 showTable :: (Table t) => [t] -> [[String]]

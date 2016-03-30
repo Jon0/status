@@ -1,6 +1,7 @@
 module Device where
 
 import Data.Maybe
+import System.IO
 import Text.Read
 import Config
 import Document
@@ -115,7 +116,7 @@ toPartitionTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", la
 
 partToMountMaybe :: Partition -> IO (Maybe Mount)
 partToMountMaybe part = do
-    mnt <- updateMounts
+    (mnt, hdl) <- updateMounts
     let mnt_name = ("/dev/" ++ strId part) in do
         return $ findMountName mnt mnt_name
 
@@ -147,11 +148,11 @@ getAllPackages (m:mnts) = do
 
 
 -- update using partitions file
-updatePartitions :: IO [Partition]
+updatePartitions :: IO ([Partition], [Handle])
 updatePartitions = readTable "/proc/partitions"
 
 
-updateMounts :: IO [Mount]
+updateMounts :: IO ([Mount], [Handle])
 updateMounts = readTable "/proc/mounts"
 
 

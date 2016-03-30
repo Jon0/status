@@ -79,7 +79,7 @@ instance RouteType DevicePage where
 
 createDevicePage :: Config -> IO DevicePage
 createDevicePage cfg = do
-    parts <- updatePartitions
+    (parts, hdls) <- updatePartitions
     return $ DevicePage (contentPath cfg) parts
 
 
