@@ -3,6 +3,7 @@ module Route where
 import System.Directory
 import System.IO
 import Config
+import Content
 import Device
 import Document
 import File
