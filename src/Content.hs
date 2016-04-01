@@ -10,6 +10,10 @@ data DataStream = DataStream {
     dataHandle :: Handle
 }
 
+-- classes which rely on files for data
+class DataDerived d where
+    getStream :: d -> DataStream
+
 
 nothingError :: IOException -> IO (Maybe t)
 nothingError e = do
