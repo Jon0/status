@@ -12,7 +12,13 @@ data DataStream = DataStream {
 
 -- classes which rely on files for data
 class DataDerived d where
+    getStrFormat :: d -> IO String
     getStream :: d -> DataStream
+
+
+printError :: IOException -> IO ()
+printError e = do
+    print e
 
 
 nothingError :: IOException -> IO (Maybe t)
@@ -41,3 +47,11 @@ contentOpen filename =
 contentClose :: DataStream -> IO ()
 contentClose ct = do
     hClose (dataHandle ct)
+
+
+-- try outputing a stream to a handle
+tryOutput :: (DataDerived d) => Handle -> d -> IO ()
+tryOutput hdl dat =
+    handle (printError) $ do
+    ct <- getStrFormat dat
+    hPutStrLn hdl ct
