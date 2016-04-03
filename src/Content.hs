@@ -10,15 +10,31 @@ data DataStream = DataStream {
     dataHandle :: Handle
 }
 
+
+class DataObject t where
+    showObject :: t -> String
+    readObject :: String -> t
+
 -- classes which rely on files for data
-class DataDerived d where
-    getStrFormat :: d -> IO String
+class (DataObject t) => DataFormat t where
+    readObjects :: Handle -> IO [t]
+    putObjects :: Handle -> [t] -> IO ()
+
+
+class (DataFormat t) => DataDependency d t | d -> t where
     getStream :: d -> DataStream
+    getFormat :: d -> t
 
 
 printError :: IOException -> IO ()
 printError e = do
     print e
+
+
+emptyError :: IOException -> IO [t]
+emptyError e = do
+    print e
+    return []
 
 
 nothingError :: IOException -> IO (Maybe t)
@@ -50,8 +66,7 @@ contentClose ct = do
 
 
 -- try outputing a stream to a handle
-tryOutput :: (DataDerived d) => Handle -> d -> IO ()
+tryOutput :: (DataFormat t) => Handle -> [t] -> IO ()
 tryOutput hdl dat =
     handle (printError) $ do
-    ct <- getStrFormat dat
-    hPutStrLn hdl ct
+    putObjects hdl dat
