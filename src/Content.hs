@@ -130,6 +130,7 @@ readSomeStream _ 0 = do
     return ("", False)
 readSomeStream stream chars =
     handle (readSomeError) $ do
+    putStrLn ("get " ++ (show chars))
     char <- hGetChar (dataHandle stream)
     (rest, end) <- readSomeStream stream (chars - 1)
     return ((char : rest), end)
@@ -152,6 +153,7 @@ createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSo
 -- send content in fragments
 sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
 sendAllContent hdl str size = do
+    putStrLn ("requesting " ++ (show size) ++ "bytes")
     (ct, end) <- (transferFn str) $ size
     putStrLn ("writing " ++ (show (length ct)) ++ "bytes")
     hPutStrLn hdl ct
