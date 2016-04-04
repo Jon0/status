@@ -120,6 +120,7 @@ contentCloseAll set = do
 
 readSomeError :: IOException -> IO (String, Bool)
 readSomeError e = do
+    print e
     return ("", True)
 
 
@@ -152,13 +153,13 @@ createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSo
 sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
 sendAllContent hdl str size = do
     (ct, end) <- (transferFn str) $ size
+    putStrLn ("writing " ++ (show (length ct)) ++ "bytes")
     hPutStrLn hdl ct
     case end of
         True -> do
             return ()
         False -> do
-            return ()
-            --sendAllContent hdl str size
+            sendAllContent hdl str size
 
 
 -- try outputing a stream to a handle
