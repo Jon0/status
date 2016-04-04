@@ -73,11 +73,11 @@ parseBlockDevice (kn:pk:fs:sz:mt:uu:[]) =
 parseBlockDevice _ = Nothing
 
 
-listBlockDevices :: IO [Device]
-listBlockDevices = do
-    parts <- updatePartitions
+listBlockDevices :: StreamSet -> IO (StreamSet, [Device])
+listBlockDevices set = do
+    (newSet, parts) <- updatePartitions set
     blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "uuid"]
-    return $ mapMaybe parseBlockDevice (tail blks)
+    return $ (newSet, mapMaybe parseBlockDevice (tail blks))
 
 
 
@@ -115,15 +115,15 @@ toPartitionTable :: [Partition] -> [[HtmlContent]]
 toPartitionTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", labelHtml "name"]] ++ (partToHtml ds)
 
 
-partToMountMaybe :: Partition -> IO (Maybe Mount)
-partToMountMaybe part = do
-    mHdl <- updateMounts
+partToMountMaybe :: StreamSet -> Partition -> IO (StreamSet, Maybe Mount)
+partToMountMaybe set part = do
+    (newSet, mHdl) <- updateMounts set
     case mHdl of
         Nothing -> do
-            return Nothing
-        Just (mnt, stream) -> do
+            return (newSet, Nothing)
+        Just mnt -> do
             let mnt_name = ("/dev/" ++ strId part) in do
-                return $ findMountName mnt mnt_name
+                return $ (newSet, findMountName mnt mnt_name)
 
 
 -- mounts to table
@@ -152,12 +152,12 @@ getAllPackages (m:mnts) = do
 
 
 -- update using partitions file
-updatePartitions :: IO (Maybe ([Partition], DataStream))
-updatePartitions = readTable "/proc/partitions"
+updatePartitions :: StreamSet -> IO (StreamSet, Maybe [Partition])
+updatePartitions set = readTableFile set "/proc/partitions"
 
 
-updateMounts :: IO (Maybe ([Mount], DataStream))
-updateMounts = readTable "/proc/mounts"
+updateMounts :: StreamSet -> IO (StreamSet, Maybe [Mount])
+updateMounts set = readTableFile set "/proc/mounts"
 
 
 dirToMount :: (FilePath, String) -> Maybe Mount

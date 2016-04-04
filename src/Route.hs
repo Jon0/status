@@ -19,14 +19,19 @@ import Util
 debugPageHandler :: HttpRequest -> IO HttpResponseHandler
 debugPageHandler request = do
     html <- pageWithHostName [labelHtml (showRequest request)]
-    return $ HttpResponseHandler (generalResponse (toHtml html)) []
+    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
 filePageHandler :: HttpRequest -> IO HttpResponseHandler
 filePageHandler request =
     let filepath = defaultPrefix (elemOrEmpty 1 (urlSplit request)) in do
-        (file, hdls) <- contentHandle filepath
-        return $ HttpResponseHandler (generalResponse file) hdls
+        (newSet, file) <- contentOpen emptyStreamSet filepath
+        case file of
+            Nothing -> do
+                return $ HttpResponseHandler (generalResponse "Not found") newSet
+            Just dat -> do
+                fileCt <- hGetContents (dataHandle dat)
+                return $ HttpResponseHandler (generalResponse fileCt) newSet
 
 
 -- a data file containing route information
@@ -52,9 +57,9 @@ createMainPage cfg = do
 
 mainPageHandler :: HttpRequest -> IO HttpResponseHandler
 mainPageHandler request = do
-    dev <- listBlockDevices
+    (newSet, dev) <- listBlockDevices emptyStreamSet
     html <- pageWithHostName ([(createHtmlHeading 1 "Devices")] ++ [(renderList dev)])
-    return $ HttpResponseHandler (generalResponse (toHtml html)) []
+    return $ HttpResponseHandler (generalResponse (toHtml html)) newSet
 
 
 mainPageMap :: MainPage -> String -> Maybe RouteItem
@@ -69,7 +74,8 @@ mainPageMap mainpage path
 -- pages for connected devices
 data DevicePage = DevicePage {
     deviceDir :: FilePath,
-    partItems :: [Partition]
+    partItems :: [Partition],
+    partStreams :: StreamSet
 }
 
 instance RouteType DevicePage where
@@ -80,12 +86,12 @@ instance RouteType DevicePage where
 
 createDevicePage :: Config -> IO DevicePage
 createDevicePage cfg = do
-    mHdl <- updatePartitions
+    (newSet, mHdl) <- updatePartitions emptyStreamSet
     case mHdl of
         Nothing -> do
-            return $ DevicePage (contentPath cfg) []
-        Just (parts, stream) -> do
-            return $ DevicePage (contentPath cfg) parts
+            return $ DevicePage (contentPath cfg) [] newSet
+        Just parts -> do
+            return $ DevicePage (contentPath cfg) parts newSet
 
 
 -- mounts and umounts devices
@@ -110,26 +116,26 @@ partitionPackageTable path = do
 
 
 -- use the mount location of the filesystem
-partitionInfoPage :: Partition -> IO [HtmlContent]
+partitionInfoPage :: Partition -> IO (StreamSet, [HtmlContent])
 partitionInfoPage p = do
-    mnt <- partToMountMaybe p
+    (newSet, mnt) <- partToMountMaybe emptyStreamSet p
     case mnt of
         Just m -> do
             pkgs <- partitionPackageTable (mntPath m)
-            return (title ++ [mountDeviceForm] ++ filelink ++ pkgs) where
+            return (newSet, (title ++ [mountDeviceForm] ++ filelink ++ pkgs)) where
                 title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
                 filelink = [(generalHref "Browse Files" ("/dev/" ++ (strId p) ++ "/files"))]
         Nothing -> do
-            return ([(createHtmlHeading 3 (strId p))] ++ [mountDeviceForm])
+            return (newSet, ([(createHtmlHeading 3 (strId p))] ++ [mountDeviceForm]))
 
 
 
 devicePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponseHandler
 devicePageHandler part mountpath request = do
     queryAction part mountpath (query request)
-    body <- partitionInfoPage part
+    (set, body) <- partitionInfoPage part
     html <- pageWithHostName body
-    return $ HttpResponseHandler (generalResponse (toHtml html)) []
+    return $ HttpResponseHandler (generalResponse (toHtml html)) set
 
 
 -- generate file database
@@ -162,15 +168,15 @@ partitionFileToContent part du query = do
 -- requests for file contents
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponseHandler
 deviceFilePageHandler part subdir request = do
-    mnt <- partToMountMaybe part
+    (newSet, mnt) <- partToMountMaybe emptyStreamSet part
     case mnt of
         Just m -> let (u, d) = (breakRequest request 3) in
                     let du = (DirectoryUrl (mntPath m) u d) in do
                         str <- partitionFileToContent part du (query request)
-                        return $ HttpResponseHandler (generalResponse str) []
+                        return $ HttpResponseHandler (generalResponse str) newSet
         Nothing -> do
             html <- pageWithHostName [(createHtmlHeading 3 ((strId part) ++ " is not mounted"))]
-            return $ HttpResponseHandler (generalResponse (toHtml html)) []
+            return $ HttpResponseHandler (generalResponse (toHtml html)) newSet
 
 
 -- shows output of lsblk
@@ -178,7 +184,7 @@ noDevicePageHandler :: HttpRequest -> IO HttpResponseHandler
 noDevicePageHandler request = do
     blks <- listBlock ["kname", "pkname", "maj:min", "fstype", "size", "mountpoint", "label", "uuid", "state", "model", "serial", "vendor"]
     html <- pageWithHostName [(createHtmlTable (linesToHtml blks))]
-    return $ HttpResponseHandler (generalResponse (toHtml html)) []
+    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
 
@@ -230,7 +236,7 @@ packagePageHandler :: HttpRequest -> IO HttpResponseHandler
 packagePageHandler request = do
     body <- packageTable "/srv" (subUrl 1 request)
     html <- pageWithHostName body
-    return $ HttpResponseHandler (generalResponse (toHtml html)) []
+    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
 -- does not know which packages exist
@@ -252,7 +258,7 @@ httpGetHandler routes hdl = do
             Just out -> do
                 response <- out
                 hPutStrLn hdl (responseString (responseData response))
-                closeHandles (dependentHandles response)
+                contentCloseAll (responseSource response)
 
 
 postResponse :: Handle -> IO ()

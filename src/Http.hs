@@ -6,6 +6,7 @@ import Network.HTTP
 import Network.Stream
 import System.IO
 import Numeric
+import Content
 import File
 import Util
 
@@ -30,7 +31,7 @@ data HttpResponse = HttpResponse {
 
 data HttpResponseHandler = HttpResponseHandler {
     responseData :: HttpResponse,
-    dependentHandles :: [Handle]
+    responseSource :: StreamSet
 }
 
 -- either a content producer, or a link to one

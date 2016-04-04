@@ -48,15 +48,21 @@ toTable :: (Table t) => [[String]] -> [t]
 toTable tb = mapMaybe readLine tb
 
 
-readTable :: (Table t) => FilePath -> IO (Maybe ([t], DataStream))
-readTable path = do
-    mHdl <- contentOpen path
+readTableFile :: (Table t) => StreamSet -> FilePath -> IO (StreamSet, Maybe [t])
+readTableFile set path = do
+    (newSet, mHdl) <- contentOpen set path
     case mHdl of
         Nothing -> do
-            return Nothing
+            return (newSet, Nothing)
         Just stream -> do
-            ct <- hGetContents (dataHandle stream)
-            return $ Just ((toTable (splitLines ct)), stream)
+            items <- readTable stream
+            return $ (newSet, Just items)
+
+
+readTable :: (Table t) => DataStream -> IO [t]
+readTable stream = do
+    ct <- hGetContents (dataHandle stream)
+    return $ toTable (splitLines ct)
 
 
 showTable :: (Table t) => [t] -> [[String]]
