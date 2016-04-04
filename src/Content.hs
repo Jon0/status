@@ -106,7 +106,7 @@ contentClose set ct = do
 
 contentCloseAll :: StreamSet -> IO ()
 contentCloseAll set = do
-    putStrLn ("Closing " ++ (show (map dataPath (openStreams set))) ++ " handles")
+    putStrLn ("Closing " ++ (show (map dataPath (openStreams set))))
     mapM hClose (map dataHandle (openStreams set))
     return ()
 
