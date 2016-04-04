@@ -151,6 +151,8 @@ createStringTransfer :: String -> StreamTransfer
 createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSomeString s)
 
 
+
+
 -- send content in fragments
 sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
 sendAllContent hdl str size = do

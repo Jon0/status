@@ -150,7 +150,7 @@ partitionFileQuery d s = do
 
 
 -- return generated directory view or a file
-partitionFileToContent :: StreamSet -> Partition -> DirectoryUrl -> String -> IO (StreamSet, String)
+partitionFileToContent :: StreamSet -> Partition -> DirectoryUrl -> String -> IO (StreamSet, StreamTransfer)
 partitionFileToContent set part du query = do
     isDir <- doesDirectoryExist (fsLocation du)
     if isDir
@@ -158,15 +158,14 @@ partitionFileToContent set part du query = do
         partitionFileQuery du query
         content <- dirTemplate du
         html <- pageWithHostName content
-        return (set, (toHtml html))
+        return (set, (createStringTransfer (toHtml html)))
     else do
         (newSet, ct) <- contentOpen set (fsLocation du)
         case ct of
             Nothing -> do
-                return (newSet, ((fsLocation du) ++ " not found"))
+                return (newSet, (createStringTransfer ((fsLocation du) ++ " not found")))
             Just stream -> do
-                contents <- hGetContents (dataHandle stream)
-                return (newSet, contents)
+                return (newSet, (createStreamTransfer stream))
 
 
 -- requests for file contents
@@ -177,7 +176,7 @@ deviceFilePageHandler part subdir request = do
         Just m -> let (u, d) = (breakRequest request 3) in
                     let du = (DirectoryUrl (mntPath m) u d) in do
                         (setB, str) <- partitionFileToContent setA part du (query request)
-                        return $ HttpResponseHandler (generalResponse str) setB
+                        return $ HttpResponseHandler (streamResponse str) setB
         Nothing -> do
             html <- pageWithHostName [(createHtmlHeading 3 ((strId part) ++ " is not mounted"))]
             return $ HttpResponseHandler (generalResponse (toHtml html)) setA
