@@ -30,8 +30,7 @@ filePageHandler request =
             Nothing -> do
                 return $ HttpResponseHandler (generalResponse "Not found") newSet
             Just dat -> do
-                fileCt <- hGetContents (dataHandle dat)
-                return $ HttpResponseHandler (generalResponse fileCt) newSet
+                return $ HttpResponseHandler (streamResponse (createStreamTransfer dat)) newSet
 
 
 -- a data file containing route information
