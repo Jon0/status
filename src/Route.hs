@@ -151,32 +151,37 @@ partitionFileQuery d s = do
 
 
 -- return generated directory view or a file
-partitionFileToContent :: Partition -> DirectoryUrl -> String -> IO String
-partitionFileToContent part du query = do
+partitionFileToContent :: StreamSet -> Partition -> DirectoryUrl -> String -> IO (StreamSet, String)
+partitionFileToContent set part du query = do
     isDir <- doesDirectoryExist (fsLocation du)
     if isDir
     then do
         partitionFileQuery du query
         content <- dirTemplate du
         html <- pageWithHostName content
-        return $ toHtml html
+        return (set, (toHtml html))
     else do
-        content <- fileContent (fsLocation du)
-        return content
+        (newSet, ct) <- contentOpen set (fsLocation du)
+        case ct of
+            Nothing -> do
+                return (newSet, ((fsLocation du) ++ " not found"))
+            Just stream -> do
+                contents <- hGetContents (dataHandle stream)
+                return (newSet, contents)
 
 
 -- requests for file contents
 deviceFilePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponseHandler
 deviceFilePageHandler part subdir request = do
-    (newSet, mnt) <- partToMountMaybe emptyStreamSet part
+    (setA, mnt) <- partToMountMaybe emptyStreamSet part
     case mnt of
         Just m -> let (u, d) = (breakRequest request 3) in
                     let du = (DirectoryUrl (mntPath m) u d) in do
-                        str <- partitionFileToContent part du (query request)
-                        return $ HttpResponseHandler (generalResponse str) newSet
+                        (setB, str) <- partitionFileToContent setA part du (query request)
+                        return $ HttpResponseHandler (generalResponse str) setB
         Nothing -> do
             html <- pageWithHostName [(createHtmlHeading 3 ((strId part) ++ " is not mounted"))]
-            return $ HttpResponseHandler (generalResponse (toHtml html)) newSet
+            return $ HttpResponseHandler (generalResponse (toHtml html)) setA
 
 
 -- shows output of lsblk
