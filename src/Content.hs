@@ -157,7 +157,8 @@ sendAllContent hdl str size = do
         True -> do
             return ()
         False -> do
-            sendAllContent hdl str size
+            return ()
+            --sendAllContent hdl str size
 
 
 -- try outputing a stream to a handle
