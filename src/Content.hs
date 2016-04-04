@@ -125,6 +125,8 @@ readSomeError e = do
 
 -- read some bytes from handle
 readSomeStream :: DataStream -> FileOffset -> IO (String, Bool)
+readSomeStream _ 0 = do
+    return ("", False)
 readSomeStream stream chars =
     handle (readSomeError) $ do
     char <- hGetChar (dataHandle stream)
