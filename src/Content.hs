@@ -25,6 +25,12 @@ data DataStream = DataStream {
 }
 
 
+data StreamTransfer = StreamTransfer {
+    transferLength :: Maybe FileOffset,
+    transferFn :: FileOffset -> IO (String, Bool)
+}
+
+-- serialisable types
 class DataObject t where
     showObject :: t -> String
     readObject :: String -> t
@@ -109,6 +115,47 @@ contentCloseAll set = do
     putStrLn ("Closing " ++ (show (map dataPath (openStreams set))))
     mapM hClose (map dataHandle (openStreams set))
     return ()
+
+
+
+readSomeError :: IOException -> IO (String, Bool)
+readSomeError e = do
+    return ("", True)
+
+
+-- read some bytes from handle
+readSomeStream :: DataStream -> FileOffset -> IO (String, Bool)
+readSomeStream stream chars =
+    handle (readSomeError) $ do
+    char <- hGetChar (dataHandle stream)
+    (rest, end) <- readSomeStream stream (chars - 1)
+    return ((char : rest), end)
+
+
+createStreamTransfer :: DataStream -> StreamTransfer
+createStreamTransfer s = StreamTransfer (dataLength s) (readSomeStream s)
+
+
+
+readSomeString :: String -> FileOffset -> IO (String, Bool)
+readSomeString str chars = do
+    return (str, True)
+
+
+createStringTransfer :: String -> StreamTransfer
+createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSomeString s)
+
+
+-- send content in fragments
+sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
+sendAllContent hdl str size = do
+    (ct, end) <- (transferFn str) $ size
+    hPutStrLn hdl ct
+    case end of
+        True -> do
+            return ()
+        False -> do
+            sendAllContent hdl str size
 
 
 -- try outputing a stream to a handle

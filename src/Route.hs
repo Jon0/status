@@ -262,7 +262,7 @@ httpGetHandler routes hdl = do
                 hPutStrLn hdl ((makeResponseLine 404) ++ "\n\n")
             Just out -> do
                 response <- out
-                hPutStrLn hdl (responseString (responseData response))
+                sendAllResponse hdl (responseData response)
                 contentCloseAll (responseSource response)
 
 

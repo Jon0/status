@@ -26,7 +26,7 @@ data HttpRequest = HttpRequest {
 
 data HttpResponse = HttpResponse {
     header :: [String],
-    content :: String
+    content :: StreamTransfer
 }
 
 data HttpResponseHandler = HttpResponseHandler {
@@ -133,14 +133,35 @@ makeResponseLine :: Int -> String
 makeResponseLine code = ("HTTP/1.1 " ++ (show code) ++ " " ++ (codeName code))
 
 
+
+
 -- creates a general response from a string of content
 generalResponse :: String -> HttpResponse
-generalResponse content = (HttpResponse header content) where
-    header = [(makeResponseLine 200), ("Content-Length: " ++ (show (length content)))]
+generalResponse content = streamResponse (createStringTransfer content)
 
 
-responseString :: HttpResponse -> String
-responseString r = ((intercalate "\n" (header r)) ++ "\n\n" ++ (content r))
+streamResponseLength :: StreamTransfer -> [String]
+streamResponseLength content =
+    case (transferLength content) of
+        Nothing -> []
+        Just len -> [("Content-Length: " ++ (show len))]
+
+
+streamResponse :: StreamTransfer -> HttpResponse
+streamResponse content = (HttpResponse header content) where
+    header = [(makeResponseLine 200)] ++ (streamResponseLength content)
+
+
+
+responseHeadString :: HttpResponse -> String
+responseHeadString r = ((intercalate "\n" (header r)) ++ "\n\n")
+
+
+sendAllResponse :: Handle -> HttpResponse -> IO ()
+sendAllResponse hdl response = do
+    hPutStrLn hdl (responseHeadString response)
+    sendAllContent hdl (content response) 4096
+
 
 -- unused
 type RequestHandler = Request_String -> IO Response_String
