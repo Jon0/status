@@ -4,6 +4,7 @@ import Data.Maybe
 import System.IO
 import Text.Read
 import Config
+import Content
 import Document
 import File
 import Html
@@ -116,10 +117,13 @@ toPartitionTable ds = [[labelHtml "maj", labelHtml "min", labelHtml "blocks", la
 
 partToMountMaybe :: Partition -> IO (Maybe Mount)
 partToMountMaybe part = do
-    (mnt, hdl) <- updateMounts
-    let mnt_name = ("/dev/" ++ strId part) in do
-        return $ findMountName mnt mnt_name
-
+    mHdl <- updateMounts
+    case mHdl of
+        Nothing -> do
+            return Nothing
+        Just (mnt, stream) -> do
+            let mnt_name = ("/dev/" ++ strId part) in do
+                return $ findMountName mnt mnt_name
 
 
 -- mounts to table
@@ -148,11 +152,11 @@ getAllPackages (m:mnts) = do
 
 
 -- update using partitions file
-updatePartitions :: IO ([Partition], [Handle])
+updatePartitions :: IO (Maybe ([Partition], DataStream))
 updatePartitions = readTable "/proc/partitions"
 
 
-updateMounts :: IO ([Mount], [Handle])
+updateMounts :: IO (Maybe ([Mount], DataStream))
 updateMounts = readTable "/proc/mounts"
 
 

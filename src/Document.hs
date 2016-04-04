@@ -4,6 +4,7 @@ module Document where
 import Data.Maybe
 import System.IO
 import System.Directory
+import Content
 import File
 import Html
 import Util
@@ -47,10 +48,15 @@ toTable :: (Table t) => [[String]] -> [t]
 toTable tb = mapMaybe readLine tb
 
 
-readTable :: (Table t) => FilePath -> IO ([t], [Handle])
+readTable :: (Table t) => FilePath -> IO (Maybe ([t], DataStream))
 readTable path = do
-    (prt, hdl) <- contentHandle path
-    return $ ((toTable (splitLines prt)), hdl)
+    mHdl <- contentOpen path
+    case mHdl of
+        Nothing -> do
+            return Nothing
+        Just stream -> do
+            ct <- hGetContents (dataHandle stream)
+            return $ Just ((toTable (splitLines ct)), stream)
 
 
 showTable :: (Table t) => [t] -> [[String]]

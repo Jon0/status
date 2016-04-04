@@ -80,8 +80,12 @@ instance RouteType DevicePage where
 
 createDevicePage :: Config -> IO DevicePage
 createDevicePage cfg = do
-    (parts, hdls) <- updatePartitions
-    return $ DevicePage (contentPath cfg) parts
+    mHdl <- updatePartitions
+    case mHdl of
+        Nothing -> do
+            return $ DevicePage (contentPath cfg) []
+        Just (parts, stream) -> do
+            return $ DevicePage (contentPath cfg) parts
 
 
 -- mounts and umounts devices
