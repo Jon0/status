@@ -143,6 +143,7 @@ createStreamTransfer s = StreamTransfer (dataLength s) (readSomeStream s)
 
 readSomeString :: String -> FileOffset -> IO (String, Bool)
 readSomeString str chars = do
+    putStrLn "return string"
     return (str, True)
 
 
