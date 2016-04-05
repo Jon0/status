@@ -148,11 +148,10 @@ createStringTransfer :: String -> StreamTransfer
 createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSomeString s)
 
 
-
-
 -- send content in fragments
 sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
-sendAllContent hdl str size = do
+sendAllContent hdl str size =
+    handle (printError) $ do
     (ct, end) <- (transferFn str) $ size
     putStrLn ("writing " ++ (show (length ct)) ++ " bytes")
     hPutStrLn hdl ct

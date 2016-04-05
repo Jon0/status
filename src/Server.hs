@@ -30,7 +30,7 @@ mainLoop handler sock = do
 respond :: (Handle -> IO ()) -> (Socket, SockAddr) -> IO ()
 respond handler (sock, _) = do
     hdl <- socketToHandle sock ReadWriteMode
-    hSetBuffering hdl NoBuffering
+    --hSetBuffering hdl NoBuffering
     handler hdl
     hClose hdl
 
