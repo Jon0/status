@@ -1,7 +1,6 @@
 module Route where
 
 import System.Directory
-import System.FilePath.Posix
 import System.IO
 import Config
 import Content
@@ -17,13 +16,6 @@ import Template
 import Util
 
 
-fileMimeType :: FilePath -> Maybe String
-fileMimeType path =
-    let ext = takeExtension path in
-        if ext == ".webm" then Just "video/webm"
-        else if ext == ".mp4" then Just "video/mp4"
-        else if ext == ".obv" then Just "video/ogg"
-        else Nothing
 
 debugPageHandler :: HttpRequest -> IO HttpResponseHandler
 debugPageHandler request = do

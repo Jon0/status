@@ -14,9 +14,13 @@ dirStatusView d = [title, br, mount, br, items] where
 
 
 statToTableRow :: DirectoryUrl -> FileStat -> [HtmlContent]
-statToTableRow d stat = [name, isDir] where
+statToTableRow d stat = [name, isDir, mimeType] where
     name = labelHtml $ htmlTagOpt "a" [(htmlRef ((webLocation d) ++ "/" ++ (fileName stat)))] (fileName stat)
     isDir = createLabel (show (isDirectory stat))
+    mimeType = createLabel t where
+        t = case fileMimeType (fsLocation d) of
+            Nothing -> "-"
+            Just s -> s
 
 
 -- create a file table

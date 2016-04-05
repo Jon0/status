@@ -4,6 +4,7 @@ import Control.Exception
 import Data.List
 import System.Directory
 import System.FilePath
+import System.FilePath.Posix
 import System.Process
 import System.IO
 import Util
@@ -65,6 +66,16 @@ directoryContent p = do
     allFiles <- showDirectory p
     list <- mapM createFileStat (prefixSet (p ++ "/") allFiles)
     return list
+
+
+fileMimeType :: FilePath -> Maybe String
+fileMimeType path =
+    let ext = takeExtension path in
+        if ext == ".webm" then Just "video/webm"
+        else if ext == ".mp4" then Just "video/mp4"
+        else if ext == ".obv" then Just "video/ogg"
+        else Nothing
+
 
 
 -- command line actions
