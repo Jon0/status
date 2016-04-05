@@ -75,6 +75,7 @@ contentCreateHandle uid path =
     handle (nothingError) $ do
     hdl <- openFile path ReadMode
     hSetBinaryMode hdl True
+    hSetBuffering hdl NoBuffering
     len <- contentSize path
     return $ Just (DataStream uid path len hdl)
 
