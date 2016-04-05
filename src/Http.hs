@@ -165,7 +165,7 @@ streamResponse c = (HttpResponse h c) where
 
 
 responseHeadString :: HttpResponse -> String
-responseHeadString r = ((intercalate "\n" (header r)) ++ "\n\n")
+responseHeadString r = ((intercalate "\n" (header r)) ++ "\n\ne\n")
 
 
 sendAllResponse :: Handle -> HttpResponse -> IO ()
