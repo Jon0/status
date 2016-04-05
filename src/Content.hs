@@ -154,7 +154,7 @@ createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSo
 sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
 sendAllContent hdl str size = do
     (ct, end) <- (transferFn str) $ size
-    putStrLn ("writing " ++ (show (length ct)) ++ "bytes")
+    putStrLn ("writing " ++ (show (length ct)) ++ " bytes")
     hPutStrLn hdl ct
     case end of
         True -> do
