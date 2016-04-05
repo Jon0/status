@@ -137,7 +137,7 @@ readSomeStream stream chars =
 
 
 createStreamTransfer :: DataStream -> Maybe String -> StreamTransfer
-createStreamTransfer s t = StreamTransfer (dataLength s) t (readSomeStream s)
+createStreamTransfer s t = StreamTransfer (dataLength s) Nothing (readSomeStream s)
 
 
 
