@@ -140,16 +140,27 @@ generalResponse :: String -> HttpResponse
 generalResponse content = streamResponse (createStringTransfer content)
 
 
+maybeHeaderElement :: (Show t) => String -> Maybe t -> [String]
+maybeHeaderElement label mb =
+    case mb of
+        Nothing -> []
+        Just obj -> [(label ++ ": " ++ (show obj))]
+
+
 streamResponseLength :: StreamTransfer -> [String]
 streamResponseLength content =
-    case (transferLength content) of
-        Nothing -> []
-        Just len -> [("Content-Length: " ++ (show len))]
+    maybeHeaderElement "Content-Length" (transferLength content)
+
+
+streamResponseType :: StreamTransfer -> [String]
+streamResponseType content =
+    maybeHeaderElement "Content-Type" (transferMimeType content)
+
 
 
 streamResponse :: StreamTransfer -> HttpResponse
-streamResponse content = (HttpResponse header content) where
-    header = [(makeResponseLine 200)] ++ (streamResponseLength content)
+streamResponse c = (HttpResponse h c) where
+    h = [(makeResponseLine 200)] ++ (streamResponseLength c) ++ (streamResponseType c)
 
 
 

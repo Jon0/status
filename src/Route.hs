@@ -1,6 +1,7 @@
 module Route where
 
 import System.Directory
+import System.FilePath.Posix
 import System.IO
 import Config
 import Content
@@ -16,6 +17,14 @@ import Template
 import Util
 
 
+fileMimeType :: FilePath -> Maybe String
+fileMimeType path =
+    let ext = takeExtension path in
+        if ext == ".webm" then Just "video/webm"
+        else if ext == ".mp4" then Just "video/mp4"
+        else if ext == ".obv" then Just "video/ogg"
+        else Nothing
+
 debugPageHandler :: HttpRequest -> IO HttpResponseHandler
 debugPageHandler request = do
     html <- pageWithHostName [labelHtml (showRequest request)]
@@ -30,7 +39,7 @@ filePageHandler request =
             Nothing -> do
                 return $ HttpResponseHandler (generalResponse "Not found") newSet
             Just dat -> do
-                return $ HttpResponseHandler (streamResponse (createStreamTransfer dat)) newSet
+                return $ HttpResponseHandler (streamResponse (createStreamTransfer dat (fileMimeType filepath))) newSet
 
 
 -- a data file containing route information
@@ -165,7 +174,7 @@ partitionFileToContent set part du query = do
             Nothing -> do
                 return (newSet, (createStringTransfer ((fsLocation du) ++ " not found")))
             Just stream -> do
-                return (newSet, (createStreamTransfer stream))
+                return (newSet, (createStreamTransfer stream (fileMimeType (fsLocation du))))
 
 
 -- requests for file contents

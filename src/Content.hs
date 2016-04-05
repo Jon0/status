@@ -27,6 +27,7 @@ data DataStream = DataStream {
 
 data StreamTransfer = StreamTransfer {
     transferLength :: Maybe FileOffset,
+    transferMimeType :: Maybe String,
     transferFn :: FileOffset -> IO (String, Bool)
 }
 
@@ -135,8 +136,8 @@ readSomeStream stream chars =
     return ((char : rest), end)
 
 
-createStreamTransfer :: DataStream -> StreamTransfer
-createStreamTransfer s = StreamTransfer (dataLength s) (readSomeStream s)
+createStreamTransfer :: DataStream -> Maybe String -> StreamTransfer
+createStreamTransfer s t = StreamTransfer (dataLength s) t (readSomeStream s)
 
 
 
@@ -146,7 +147,7 @@ readSomeString str chars = do
 
 
 createStringTransfer :: String -> StreamTransfer
-createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) (readSomeString s)
+createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) Nothing (readSomeString s)
 
 
 -- send content in fragments
