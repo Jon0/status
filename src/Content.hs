@@ -155,7 +155,7 @@ sendAllContent hdl str size =
     handle (printError) $ do
     (ct, end) <- (transferFn str) $ size
     putStrLn ("writing " ++ (show (length ct)) ++ " bytes")
-    hPutStrLn hdl ct
+    hPutStr hdl ct
     case end of
         True -> do
             return ()
