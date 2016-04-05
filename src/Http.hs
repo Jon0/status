@@ -160,7 +160,7 @@ responseHeadString r = ((intercalate "\n" (header r)) ++ "\n\n")
 sendAllResponse :: Handle -> HttpResponse -> IO ()
 sendAllResponse hdl response = do
     hPutStrLn hdl (responseHeadString response)
-    sendAllContent hdl (content response) 4096
+    sendAllContent hdl (content response) (16 * 1024)
 
 
 -- unused
