@@ -74,7 +74,7 @@ fileMimeType path =
         if ext == ".webm" then Just "video/webm"
         else if ext == ".mp4" then Just "video/mp4"
         else if ext == ".obv" then Just "video/ogg"
-        else Nothing
+        else Just (path ++ " : " ++ ext)
 
 
 
