@@ -5,13 +5,36 @@ import Data.List
 import Data.Maybe
 import System.Directory
 import System.FilePath
+import Text.Read
 import Document
 import File
 import Html
 import Util
 
 
-data Package = Package { pkgName :: String, pkgFiles :: [FilePath] }
+data PackageFile = PackageFile {
+    relativePath :: FilePath,
+    fileMime :: String,
+    fileHash :: Integer,
+    fileSize :: Integer,
+    fileShow :: Bool
+}
+
+
+instance Table PackageFile where
+    readLine (n:t:h:s:v:[]) = case (readMaybe h :: Maybe Integer, readMaybe s :: Maybe Integer, readMaybe v :: Maybe Bool) of
+        (Just rh, Just rs, Just rv) -> Just $ PackageFile n t rh rs rv
+        otherwise -> Nothing
+    readLine _ = Nothing
+
+    showLine f = [(relativePath f), (fileMime f), (show (fileHash f)), (show (fileSize f)), (show (fileShow f))]
+
+
+data Package = Package {
+    pkgName :: String,
+    pkgFiles :: [PackageFile]
+}
+
 
 instance DocNode Package where
     createHtml dev style = do
@@ -30,8 +53,8 @@ instance DocNode Storage where
 --        return $ zipWith () [0..] list
 
 
-strLinesToFiles :: String -> [FilePath]
-strLinesToFiles ('>':str) = lines str
+strLinesToFiles :: String -> [PackageFile]
+strLinesToFiles ('>':str) = mapMaybe readLine (map (wordDelim (==';')) (lines str))
 strLinesToFiles _ = []
 
 
@@ -58,9 +81,22 @@ loadPackageData mount datafile = do
     return $ Storage mount (strToPackages content)
 
 
+-- use table fn
+-- writing package data to files
+packageFileToStr :: PackageFile -> String
+packageFileToStr f = intercalate ";" (showLine f)
+
+
+writePackageHead :: Package -> String
+writePackageHead pkg = "<" ++ (pkgName pkg) ++ ">\n"
+
+
+writePackageBody :: Package -> String
+writePackageBody pkg =  (intercalate "\n" (map packageFileToStr (pkgFiles pkg)) ++ "\n")
+
 
 packageToStr :: Package -> String
-packageToStr pkg = ("<" ++ (pkgName pkg) ++ ">\n" ++ (intercalate "\n" (pkgFiles pkg)) ++ "\n\n")
+packageToStr pkg = ((writePackageHead pkg) ++ (writePackageBody pkg) ++ "\n")
 
 
 -- save to file
@@ -126,11 +162,18 @@ pathToPackageName :: FilePath -> String
 pathToPackageName path = map replaceBrackets (takeFileName path)
 
 
+generatePackageFile :: FilePath -> IO PackageFile
+generatePackageFile p = do
+    hs <- (readFileHash p)
+    sz <- (readFileSize p)
+    return $ PackageFile p (showFileMime p) hs sz True
+
 -- generate package data with mountpoint and subdirectory name
 generatePackage :: FilePath -> IO Package
 generatePackage path = do
     files <- allSubFiles path
-    return $ Package (pathToPackageName path) files
+    pkgFiles <- mapM generatePackageFile files
+    return $ Package (pathToPackageName path) pkgFiles
 
 
 -- one package per subdirectory

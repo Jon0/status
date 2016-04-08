@@ -31,7 +31,7 @@ filePageHandler request =
             Nothing -> do
                 return $ HttpResponseHandler (generalResponse "Not found") newSet
             Just dat -> do
-                return $ HttpResponseHandler (streamResponse (createStreamTransfer dat (fileMimeType filepath))) newSet
+                return $ HttpResponseHandler (streamResponse (createStreamTransfer dat (Just $ showFileMime filepath))) newSet
 
 
 -- a data file containing route information
@@ -166,7 +166,7 @@ partitionFileToContent set part du query = do
             Nothing -> do
                 return (newSet, (createStringTransfer ((fsLocation du) ++ " not found")))
             Just stream -> do
-                return (newSet, (createStreamTransfer stream (fileMimeType (fsLocation du))))
+                return (newSet, (createStreamTransfer stream (Just $ showFileMime (fsLocation du))))
 
 
 -- requests for file contents

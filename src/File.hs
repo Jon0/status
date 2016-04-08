@@ -10,6 +10,29 @@ import System.IO
 import Util
 
 
+-- replace with unix stat type
+data FileStat = FileStat {
+    fileLocation :: FilePath,
+    fileName :: String,
+    isDirectory :: Bool
+}
+
+
+createFileStat :: FilePath -> IO FileStat
+createFileStat path = do
+    isDir <- doesDirectoryExist path
+    return $ FileStat loc name isDir where
+        loc = takeDirectory path
+        name = takeFileName path
+
+
+directoryContent :: FilePath -> IO [FileStat]
+directoryContent p = do
+    allFiles <- showDirectory p
+    list <- mapM createFileStat (prefixSet (p ++ "/") allFiles)
+    return list
+
+
 -- mapping from url paths to mount paths
 data DirectoryUrl = DirectoryUrl {
     duMount :: FilePath,
@@ -45,37 +68,32 @@ showDirectoryUrl :: DirectoryUrl -> String
 showDirectoryUrl d = ("(" ++ (duMount d) ++ ", " ++ (duWebRoot d) ++ ", " ++ (duDirectory d) ++ ")")
 
 
+fullFsPath :: DirectoryUrl -> FileStat -> FilePath
+fullFsPath d f = ((fsLocation d) ++ "/" ++ (fileName f))
 
-data FileStat = FileStat {
-    fileLocation :: FilePath,
-    fileName :: String,
-    isDirectory :: Bool
-}
-
-
-createFileStat :: FilePath -> IO FileStat
-createFileStat path = do
-    isDir <- doesDirectoryExist path
-    return $ FileStat loc name isDir where
-        loc = takeDirectory path
-        name = takeFileName path
+fullWebPath :: DirectoryUrl -> FileStat -> FilePath
+fullWebPath d f = ((webLocation d) ++ "/" ++ (fileName f))
 
 
-directoryContent :: FilePath -> IO [FileStat]
-directoryContent p = do
-    allFiles <- showDirectory p
-    list <- mapM createFileStat (prefixSet (p ++ "/") allFiles)
-    return list
 
 
-fileMimeType :: FilePath -> Maybe String
-fileMimeType path =
+showFileMime :: FilePath -> String
+showFileMime path =
     let ext = takeExtension path in
-        if ext == ".webm" then Just "video/webm"
-        else if ext == ".mp4" then Just "video/mp4"
-        else if ext == ".obv" then Just "video/ogg"
-        else Just (path ++ " : " ++ ext)
+        if ext == ".webm" then "video/webm"
+        else if ext == ".mp4" then "video/mp4"
+        else if ext == ".obv" then "video/ogg"
+        else ext
 
+
+readFileHash :: FilePath -> IO Integer
+readFileHash path = do
+    return 0
+
+
+readFileSize :: FilePath -> IO Integer
+readFileSize path = do
+    return 0
 
 
 -- command line actions
