@@ -156,7 +156,6 @@ sendAllContent :: Handle -> StreamTransfer -> Int -> IO ()
 sendAllContent hdl str size =
     handle (printError) $ do
     (ct, end) <- (transferFn str) $ size
-    putStrLn ("writing " ++ (show (Data.ByteString.length ct)) ++ " bytes")
     Data.ByteString.hPutStr hdl ct
     case end of
         True -> do
