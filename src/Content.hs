@@ -1,5 +1,7 @@
 module Content where
 
+import qualified Data.ByteString
+import qualified Data.ByteString.Char8
 import Control.Exception
 import System.IO
 import System.Posix
@@ -28,7 +30,7 @@ data DataStream = DataStream {
 data StreamTransfer = StreamTransfer {
     transferLength :: Maybe FileOffset,
     transferMimeType :: Maybe String,
-    transferFn :: FileOffset -> IO (String, Bool)
+    transferFn :: Int -> IO (Data.ByteString.ByteString, Bool)
 }
 
 -- serialisable types
@@ -119,21 +121,20 @@ contentCloseAll set = do
 
 
 
-readSomeError :: IOException -> IO (String, Bool)
+readSomeError :: IOException -> IO (Data.ByteString.ByteString, Bool)
 readSomeError e = do
     print e
-    return ("", True)
+    return (Data.ByteString.empty, True)
 
 
 -- read some bytes from handle
-readSomeStream :: DataStream -> FileOffset -> IO (String, Bool)
+readSomeStream :: DataStream -> Int -> IO (Data.ByteString.ByteString, Bool)
 readSomeStream _ 0 = do
-    return ("", False)
+    return (Data.ByteString.empty, False)
 readSomeStream stream chars =
     handle (readSomeError) $ do
-    char <- hGetChar (dataHandle stream)
-    (rest, end) <- readSomeStream stream (chars - 1)
-    return ((char : rest), end)
+    char <- Data.ByteString.hGetNonBlocking (dataHandle stream) chars
+    return (char, False)
 
 
 createStreamTransfer :: DataStream -> Maybe String -> StreamTransfer
@@ -141,9 +142,9 @@ createStreamTransfer s t = StreamTransfer (dataLength s) Nothing (readSomeStream
 
 
 
-readSomeString :: String -> FileOffset -> IO (String, Bool)
+readSomeString :: String -> Int -> IO (Data.ByteString.ByteString, Bool)
 readSomeString str chars = do
-    return (str, True)
+    return ((Data.ByteString.Char8.pack str), True)
 
 
 createStringTransfer :: String -> StreamTransfer
@@ -151,12 +152,12 @@ createStringTransfer s = StreamTransfer (Just (fromIntegral (length s))) Nothing
 
 
 -- send content in fragments
-sendAllContent :: Handle -> StreamTransfer -> FileOffset -> IO ()
+sendAllContent :: Handle -> StreamTransfer -> Int -> IO ()
 sendAllContent hdl str size =
     handle (printError) $ do
     (ct, end) <- (transferFn str) $ size
-    putStrLn ("writing " ++ (show (length ct)) ++ " bytes")
-    hPutStr hdl ct
+    putStrLn ("writing " ++ (show (Data.ByteString.length ct)) ++ " bytes")
+    Data.ByteString.hPutStr hdl ct
     case end of
         True -> do
             return ()
