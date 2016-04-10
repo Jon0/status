@@ -8,11 +8,13 @@ import Content
 import Document
 import File
 import Html
+import List
 import Package
 import Template
 
 
--- a single block device
+-- Header data for block devices
+-- Elements are either devices or partitions
 data Partition = Partition { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
 
 instance Table Partition where
@@ -24,6 +26,37 @@ instance Table Partition where
 
     --showLine :: rowType -> [String]
     showLine ds = [(show (majorId ds)), (show (minorId ds)), (show (blocks ds)), (strId ds)]
+
+
+-- a drive containing partitions
+data PartitionSet = PartitionSet {
+    devKName :: String,
+    devVendor :: String,
+    devModel :: String,
+    devSerial :: String,
+    devContent :: [PartitionStat]
+}
+
+instance Renderable PartitionSet where
+    renderAll dev = [(staticImage "hdd.svg" "48")] ++ (map renderRow (devContent dev))
+    renderRow dev = (labelHtml (devKName dev))
+    staticUrl dev = Just $ ("/dev/" ++ (devKName dev))
+
+
+-- collect full relevant data about one partition
+data PartitionStat = PartitionStat {
+    kName :: String,
+    pName :: String,
+    fsType :: String,
+    size :: String,
+    mPoint :: String,
+    uuId :: String
+}
+
+instance Renderable PartitionStat where
+    renderAll dev = [(staticImage "hdd.svg" "48"), (labelHtml (kName dev)), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev)), (deviceLink dev)]
+    renderRow dev = deviceLink dev
+    staticUrl dev = Just $ ("/dev/" ++ (kName dev))
 
 
 data PartOwner = PartOwner { partItem :: Partition, partOwner :: Maybe Partition }
@@ -44,40 +77,28 @@ data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 data ManagedMount = ManagedMount { autoMount :: Bool, devName :: String }
 
 
--- collected relevant data about one device
-data Device = Device {
-    kName :: String,
-    pName :: String,
-    fsType :: String,
-    size :: String,
-    mPoint :: String,
-    modelStr :: String,
-    uuId :: String
-}
-
-instance Renderable Device where
-    renderAll dev = [(staticImage "hdd.svg" "48"), (labelHtml (modelStr dev)), (labelHtml (uuId dev)), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev)), (deviceLink dev)]
-    renderRow dev = deviceLink dev
-    staticUrl dev = Just $ ("/dev/" ++ (kName dev))
-
-
-deviceLink :: Device -> HtmlContent
+deviceLink :: PartitionStat -> HtmlContent
 deviceLink dev = generalHref "Open" ("/dev/" ++ (kName dev))
 
 
 
-parseBlockDevice :: [String] -> Maybe Device
-parseBlockDevice (kn:pk:fs:sz:mt:md:uu:[]) =
-    Just $ Device kn pk fs sz mt md uu
+parseBlockDevice :: [String] -> Maybe PartitionStat
+parseBlockDevice (kn:pk:fs:sz:mt:uu:[]) =
+    Just $ PartitionStat kn pk fs sz mt uu
 parseBlockDevice _ = Nothing
 
 
-listBlockDevices :: StreamSet -> IO (StreamSet, [Device])
+listBlockDevices :: StreamSet -> IO (StreamSet, [PartitionStat])
 listBlockDevices set = do
     (newSet, parts) <- updatePartitions set
     blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "model", "uuid"]
     return $ (newSet, mapMaybe parseBlockDevice (tail blks))
 
+
+renderBlockDevices :: StreamSet -> IO (StreamSet, HtmlContent)
+renderBlockDevices set = do
+    (newSet, dev) <- listBlockDevices set
+    return $ (newSet, (renderListDiv dev))
 
 
 mountPointDir :: FilePath -> FilePath
