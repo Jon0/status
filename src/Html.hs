@@ -189,3 +189,7 @@ pageWithHostName :: [HtmlContent] -> IO HtmlDocument
 pageWithHostName body = do
     name <- getHostname
     return $ HtmlDocument (HtmlHeader name) (HtmlBody body)
+
+
+staticImage :: String -> HtmlContent
+staticImage s = createLabel $ htmlTagOpen "img" ["src=test"]
