@@ -91,7 +91,7 @@ parseBlockDevice _ = Nothing
 listBlockDevices :: StreamSet -> IO (StreamSet, [PartitionStat])
 listBlockDevices set = do
     (newSet, parts) <- updatePartitions set
-    blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "model", "uuid"]
+    blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "uuid"]
     return $ (newSet, mapMaybe parseBlockDevice (tail blks))
 
 
