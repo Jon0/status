@@ -58,7 +58,7 @@ createMainPage cfg = do
 mainPageHandler :: HttpRequest -> IO HttpResponseHandler
 mainPageHandler request = do
     (newSet, dev) <- listBlockDevices emptyStreamSet
-    html <- pageWithHostName ([(createHtmlHeading 1 "Devices")] ++ [(renderList dev)])
+    html <- pageWithHostName ([(staticImage "main.svg"), (createHtmlHeading 1 "Devices")] ++ [(renderListDiv dev)])
     return $ HttpResponseHandler (generalResponse (toHtml html)) newSet
 
 

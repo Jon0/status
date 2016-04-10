@@ -170,6 +170,18 @@ createBreak :: HtmlContent
 createBreak = HtmlContent HtmlBreak
 
 
+-- div elements
+data HtmlDiv = HtmlDiv {
+    divClass :: String,
+    divElements :: [HtmlContent]
+}
+
+instance HtmlElement HtmlDiv where
+    toHtml d = htmlTagOpt "div" [(htmlPair ("class", (divClass d)))] (joinContent (divElements d))
+
+createDiv :: String -> [HtmlContent] -> HtmlContent
+createDiv c e = HtmlContent (HtmlDiv c e)
+
 
 -- general functions
 labelHtml :: String -> HtmlContent
@@ -192,4 +204,4 @@ pageWithHostName body = do
 
 
 staticImage :: String -> HtmlContent
-staticImage s = createLabel $ htmlTagOpen "img" ["src=test"]
+staticImage s = createLabel $ htmlTagOpen "img" [(htmlPair ("src", ("/swc/" ++ s)))]

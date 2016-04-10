@@ -56,13 +56,13 @@ data Device = Device {
 }
 
 instance Renderable Device where
-    renderAll dev = [(deviceLink dev), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev))]
+    renderAll dev = [(staticImage "hdd.svg"), (labelHtml (modelStr dev)), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev)), (deviceLink dev)]
     renderRow dev = deviceLink dev
     staticUrl dev = Just $ ("/dev/" ++ (kName dev))
 
 
 deviceLink :: Device -> HtmlContent
-deviceLink dev = generalHref (kName dev) ("/dev/" ++ (kName dev))
+deviceLink dev = generalHref "Open" ("/dev/" ++ (kName dev))
 
 
 
