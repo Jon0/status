@@ -133,8 +133,8 @@ readSomeStream _ 0 = do
     return (Data.ByteString.empty, False)
 readSomeStream stream chars =
     handle (readSomeError) $ do
-    char <- Data.ByteString.hGetNonBlocking (dataHandle stream) chars
-    return (char, False)
+    char <- Data.ByteString.hGetSome (dataHandle stream) chars
+    return (char, (Data.ByteString.null char))
 
 
 createStreamTransfer :: DataStream -> Maybe String -> StreamTransfer
