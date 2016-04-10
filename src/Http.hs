@@ -90,9 +90,7 @@ firstHeaderLine _ = Nothing
 
 
 urlChar :: String -> String
-urlChar ('%':xs) =
-    [(chr c)] where
-        (c, n) = head (readHex xs)
+urlChar ('%':xs) = [(hexDigitToChar xs)]
 urlChar _ = ""
 
 

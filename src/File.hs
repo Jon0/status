@@ -96,6 +96,25 @@ readFileSize path = do
     return 0
 
 
+
+listBlockChar :: String -> String
+listBlockChar ('\\':'x':xs) = [(hexDigitToChar xs)]
+listBlockChar _ = ""
+
+
+-- replace symbols in url
+listBlockReplace :: String -> String
+listBlockReplace "" = ""
+listBlockReplace url = let (a, b) = break (=='\\') url in
+    a ++ (listBlockChar (take 4 b)) ++ (listBlockReplace (drop 4 b))
+
+
+listBlock :: [String] -> IO [[String]]
+listBlock items = do
+    result <- readProcess "lsblk" ["-r", ("-o" ++ (intercalate "," items))] ""
+    return $ map2D listBlockReplace (map allWords (lines result))
+
+
 -- command line actions
 tryCommand :: String -> IO ()
 tryCommand cmd = do
@@ -105,15 +124,9 @@ tryCommand cmd = do
     putStrLn $ show code
 
 
-listBlock :: [String] -> IO [[String]]
-listBlock items = do
-    result <- readProcess "lsblk" ["-r", ("-o" ++ (intercalate "," items))] ""
-    return $ map allWords (lines result)
-
-
 -- return hostname
 getHostname :: IO String
-getHostname = fileContent "/etc/hostname"
+getHostname = readFile "/etc/hostname"
 
 
 dotDirFilter :: String -> Bool

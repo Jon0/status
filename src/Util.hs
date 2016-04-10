@@ -1,6 +1,12 @@
 module Util where
 
 import Data.Char
+import Numeric
+
+
+map2D :: (a -> a) -> [[a]] -> [[a]]
+map2D _ [] = []
+map2D fn (x:xs) = (map fn x) : (map2D fn xs)
 
 
 -- filters out Nothing values
@@ -71,3 +77,10 @@ element :: Int -> [a] -> Maybe a
 element index array
     | index < length array = Just $ array !! index
     | otherwise = Nothing
+
+
+-- string of digits converted to char
+hexDigitToChar :: String -> Char
+hexDigitToChar xs =
+    (chr c) where
+        (c, n) = head (readHex xs)

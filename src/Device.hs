@@ -51,32 +51,31 @@ data Device = Device {
     fsType :: String,
     size :: String,
     mPoint :: String,
+    modelStr :: String,
     uuId :: String
 }
 
 instance Renderable Device where
     renderAll dev = [(deviceLink dev), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev))]
-    renderRow dev = renderDevice dev
+    renderRow dev = deviceLink dev
     staticUrl dev = Just $ ("/dev/" ++ (kName dev))
+
 
 deviceLink :: Device -> HtmlContent
 deviceLink dev = generalHref (kName dev) ("/dev/" ++ (kName dev))
 
 
-renderDevice :: Device -> HtmlContent
-renderDevice dev = deviceLink dev
-
 
 parseBlockDevice :: [String] -> Maybe Device
-parseBlockDevice (kn:pk:fs:sz:mt:uu:[]) =
-    Just $ Device kn pk fs sz mt uu
+parseBlockDevice (kn:pk:fs:sz:mt:md:uu:[]) =
+    Just $ Device kn pk fs sz mt md uu
 parseBlockDevice _ = Nothing
 
 
 listBlockDevices :: StreamSet -> IO (StreamSet, [Device])
 listBlockDevices set = do
     (newSet, parts) <- updatePartitions set
-    blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "uuid"]
+    blks <- listBlock ["kname", "pkname", "fstype", "size", "mountpoint", "model", "uuid"]
     return $ (newSet, mapMaybe parseBlockDevice (tail blks))
 
 
