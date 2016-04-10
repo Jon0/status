@@ -56,7 +56,7 @@ data Device = Device {
 }
 
 instance Renderable Device where
-    renderAll dev = [(staticImage "hdd.svg"), (labelHtml (modelStr dev)), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev)), (deviceLink dev)]
+    renderAll dev = [(staticImage "hdd.svg" "48"), (labelHtml (modelStr dev)), (labelHtml (uuId dev)), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev)), (deviceLink dev)]
     renderRow dev = deviceLink dev
     staticUrl dev = Just $ ("/dev/" ++ (kName dev))
 

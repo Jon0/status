@@ -203,5 +203,5 @@ pageWithHostName body = do
     return $ HtmlDocument (HtmlHeader name) (HtmlBody body)
 
 
-staticImage :: String -> HtmlContent
-staticImage s = createLabel $ htmlTagOpen "img" [(htmlPair ("src", ("/swc/" ++ s)))]
+staticImage :: String -> String -> HtmlContent
+staticImage s z = createLabel $ htmlTagOpen "img" [(htmlPair ("src", ("/swc/" ++ s))), (htmlPair ("height", z)), (htmlPair ("width", z))]
