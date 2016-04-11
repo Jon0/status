@@ -7,7 +7,7 @@ import Route
 import Server
 
 
-
+-- removes empty directories left behind
 clearMountDir :: FilePath -> IO ()
 clearMountDir dir = do
     dirs <- showDirectory (mountPointDir dir)

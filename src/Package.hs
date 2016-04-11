@@ -57,8 +57,10 @@ renderAllPackages pkg = ([createHtmlTable (storageToHtml pkg)])
 
 -- filter a particular name
 renderPackage :: [Package] -> String -> [HtmlContent]
-renderPackage pkg name = ([createHtmlTable (storageToHtml pkg)])
-
+renderPackage pkg name =
+    case (findPackageName pkg name) of
+        Just p -> renderAll p
+        Nothing -> [(labelHtml ("Cannot Find " ++ name))]
 
 
 
@@ -157,9 +159,7 @@ toStorageTable :: Storage -> [[HtmlContent]]
 toStorageTable st =  (storageTableHeader st) : (storageToHtml (pkgData st))
 
 
-
-
-
+-- finds a package by name
 findPackageName :: [Package] -> String -> Maybe Package
 findPackageName [] _ = Nothing
 findPackageName (p:pkgs) name =

@@ -3,7 +3,7 @@ module Config where
 import Text.Read
 import Network.Socket
 
--- application state
+-- application state from command line args
 data Config = Config {
     contentPath :: FilePath,
     hostPort :: PortNumber
