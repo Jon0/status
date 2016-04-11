@@ -9,6 +9,15 @@ map2D _ [] = []
 map2D fn (x:xs) = (map fn x) : (map2D fn xs)
 
 
+-- append an item if an equal item does not exist
+appendUnique :: (Eq a) => [a] -> a -> [a]
+appendUnique [] it = [it]
+appendUnique arr@(a:as) it =
+    if (a == it)
+    then arr
+    else a : appendUnique as it
+
+
 -- filters out Nothing values
 concatMaybe :: [Maybe a] -> [a]
 concatMaybe (x:xs) = case x of
@@ -16,6 +25,7 @@ concatMaybe (x:xs) = case x of
     Nothing -> (concatMaybe xs)
 
 
+-- add a prefix to each element
 prefixSet :: [a] -> [[a]] -> [[a]]
 prefixSet _ [] = []
 prefixSet item (x:xs) = (item ++ x) : (prefixSet item xs)

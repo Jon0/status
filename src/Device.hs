@@ -84,6 +84,13 @@ data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 data ManagedMount = ManagedMount { autoMount :: Bool, devName :: String }
 
 
+partitionStatMount :: PartitionStat -> Maybe Mount
+partitionStatMount p =
+    if (null (mPoint p))
+    then Nothing
+    else Just $ Mount (kName p) (mPoint p)
+
+
 deviceLink :: PartitionStat -> HtmlContent
 deviceLink dev = generalHref "Open" ("/dev/" ++ (kName dev))
 

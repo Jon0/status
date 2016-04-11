@@ -48,6 +48,18 @@ instance DocNode Storage where
         return $ HtmlContent (HtmlTable {tableContent = [[]]})
 
 
+-- return all contained unique mime types
+pkgAppendMimeTypes :: [String] -> [PackageFile] -> [String]
+pkgAppendMimeTypes ts (f:fs) =
+    if (null (fileMime f))
+    then pkgAppendMimeTypes ts fs
+    else pkgAppendMimeTypes (appendUnique ts (fileMime f)) fs
+
+
+pkgMimeTypes :: [PackageFile] -> [String]
+pkgMimeTypes fs = pkgAppendMimeTypes [] fs
+
+
 --tz contents = do
 --    let list = lines contents
 --        return $ zipWith () [0..] list
