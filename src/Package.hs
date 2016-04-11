@@ -63,6 +63,7 @@ renderPackage pkg name = ([createHtmlTable (storageToHtml pkg)])
 
 -- return all contained unique mime types
 pkgAppendMimeTypes :: [String] -> [PackageFile] -> [String]
+pkgAppendMimeTypes ts [] = ts
 pkgAppendMimeTypes ts (f:fs) =
     if (null (fileMime f))
     then pkgAppendMimeTypes ts fs
