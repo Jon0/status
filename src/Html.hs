@@ -34,8 +34,8 @@ htmlTagOpt :: String -> [String] -> String -> String
 htmlTagOpt tag opt item = ((htmlTagOpen tag opt) ++ item ++ (htmlTagClose tag))
 
 
-htmlTagPairs :: (Show a) => String -> [(String, String)] -> a -> String
-htmlTagPairs tag ps item = ((htmlTagOpenPairs tag ps) ++ (show item) ++ (htmlTagClose tag))
+htmlTagPairs :: String -> [(String, String)] -> String -> String
+htmlTagPairs tag ps item = ((htmlTagOpenPairs tag ps) ++ item ++ (htmlTagClose tag))
 
 
 -- transformable elements
