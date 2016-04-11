@@ -222,7 +222,8 @@ packageTable dir name = do
         then let title = ("Packages (" ++ (show (length stores)) ++ " Devices)") in do
             return $ (createHtmlHeading 1 title) : (renderAllPackages stores)
         else do
-            return $ (createHtmlHeading 1 name) : (renderPackage stores name)
+            pkgStores <- getPkgContainers cts name
+            return $ (createHtmlHeading 1 name) : (renderPackage pkgStores name)
 
 
 packagePageHandler :: HttpRequest -> IO HttpResponseHandler

@@ -35,10 +35,10 @@ filterStores (d:devs) name =
         Just p -> (d : filterStores devs name)
 
 
-getPkgContainers :: [ContainerHeader] -> Package -> IO [Storage]
-getPkgContainers cs pkg = do
+getPkgContainers :: [ContainerHeader] -> String -> IO [Storage]
+getPkgContainers cs name = do
     stores <- mapM containerData cs
-    return $ filterStores stores (pkgName pkg)
+    return $ filterStores stores name
 
 
 data PackageFile = PackageFile {
@@ -83,7 +83,7 @@ data Storage = Storage {
 }
 
 instance Renderable Storage where
-    renderAll s = [(labelHtml (mountPoint s))]
+    renderAll s = [(labelHtml ("Location: " ++ (mountPoint s)))]
     renderRow s = createDiv "pkg" (renderAll s)
     staticUrl s = Nothing
 
@@ -101,7 +101,7 @@ renderAllPackages s = ([createHtmlTable (storageToHtml (concatPackages s))])
 renderPackage :: [Storage] -> String -> [HtmlContent]
 renderPackage s name =
     case (findPackageName (concatPackages s) name) of
-        Just p -> renderAll p
+        Just p -> (renderAll p) ++ [(renderListDiv s)]
         Nothing -> [(labelHtml ("Cannot Find " ++ name))]
 
 
