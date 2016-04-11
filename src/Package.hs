@@ -9,6 +9,7 @@ import Text.Read
 import Document
 import File
 import Html
+import Template
 import Util
 
 
@@ -35,10 +36,10 @@ data Package = Package {
     pkgFiles :: [PackageFile]
 }
 
-
-instance DocNode Package where
-    createHtml dev style = do
-        return $ HtmlContent (HtmlTable {tableContent = [[]]})
+instance Renderable Package where
+    renderAll p = [(staticImage "box.svg" "48"), (labelHtml (pkgName p))]
+    renderRow p = createDiv "pkg" (renderAll p)
+    staticUrl p = Just $ ("/pkg/" ++ (pkgName p))
 
 
 data Storage = Storage { mountPoint :: FilePath, pkgData :: [Package] }
@@ -137,7 +138,7 @@ pathsToHtml p = HtmlContent (Heading 3 p)
 
 
 packageToHtml :: Package -> [HtmlContent]
-packageToHtml p = [(staticImage "box.svg" "48"), (createLabel (pkgName p)), (createLabel (show (pkgMimeTypes p)))]
+packageToHtml p = [(staticImage "box.svg" "48"), (generalHref (pkgName p) ("/pkg/" ++ (pkgName p))), (createLabel (show (pkgMimeTypes p)))]
 
 
 storageToHtml :: [Package] -> [[HtmlContent]]
