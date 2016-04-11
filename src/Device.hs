@@ -53,6 +53,11 @@ data PartitionStat = PartitionStat {
     uuId :: String
 }
 
+-- collect packages contained by this device
+instance Container PartitionStat where
+    containerHeader p = ContainerHeader (kName p) (loadPackageData (mPoint p) "statfile")
+
+
 instance Renderable PartitionStat where
     renderAll dev = [(staticImage "hdd.svg" "48"), (labelHtml (kName dev)), (labelHtml (fsType dev)), (labelHtml (size dev)), (labelHtml (mPoint dev)), (deviceLink dev)]
     renderRow dev = deviceLink dev
@@ -71,6 +76,11 @@ data PartOwner = PartOwner { partItem :: Partition, partOwner :: Maybe Partition
 
 -- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
+
+-- collect packages contained by this device
+instance Container Mount where
+    containerHeader m = ContainerHeader (deviceName m) (loadPackageData (mntPath m) "statfile")
+
 
 instance Table Mount where
     readLine (a:b:xs) = Just $ Mount a b
@@ -173,16 +183,6 @@ findMountName (x:xs) s =
     then Just x
     else findMountName xs s
 
-
--- get a complete list of packages
-getAllPackages :: [Mount] -> IO [Package]
-getAllPackages [] = do
-    return []
-getAllPackages (m:mnts) = do
-    dat <- loadPackageData (mntPath m) "statfile"
-    putStrLn ((mntPath m) ++ (show (length (pkgData dat))))
-    rpks <- getAllPackages mnts
-    return $ (pkgData dat) ++ rpks
 
 
 -- update using partitions file

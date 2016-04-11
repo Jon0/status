@@ -9,8 +9,36 @@ import Text.Read
 import Document
 import File
 import Html
+import List
 import Template
 import Util
+
+
+
+-- packages are stored in containers
+-- generalising types of devices
+data ContainerHeader = ContainerHeader {
+    containerId :: String,
+    containerData :: IO Storage
+}
+
+class Container c where
+    containerHeader :: c -> ContainerHeader
+
+
+-- filter stores containing a package name
+filterStores :: [Storage] -> String -> [Storage]
+filterStores [] _ = []
+filterStores (d:devs) name =
+    case (findPackageName (pkgData d) name) of
+        Nothing -> filterStores devs name
+        Just p -> (d : filterStores devs name)
+
+
+getPkgContainers :: [ContainerHeader] -> Package -> IO [Storage]
+getPkgContainers cs pkg = do
+    stores <- mapM containerData cs
+    return $ filterStores stores (pkgName pkg)
 
 
 data PackageFile = PackageFile {
@@ -31,37 +59,50 @@ instance Table PackageFile where
     showLine f = [(relativePath f), (fileMime f), (show (fileHash f)), (show (fileSize f)), (show (fileShow f))]
 
 
+instance Renderable PackageFile where
+    renderAll p = [(labelHtml (relativePath p)), (labelHtml (fileMime p)), (labelHtml (show (fileHash p))), (labelHtml (show (fileSize p)))]
+    renderRow p = createDiv "pkg" (renderAll p)
+    staticUrl p = Nothing
+
+
+
 data Package = Package {
     pkgName :: String,
     pkgFiles :: [PackageFile]
 }
 
 instance Renderable Package where
-    renderAll p = [(staticImage "box.svg" "48"), (labelHtml (pkgName p))]
+    renderAll p = [(staticImage "box.svg" "48"), (labelHtml (pkgName p)), (renderList (pkgFiles p))]
     renderRow p = createDiv "pkg" (renderAll p)
     staticUrl p = Just $ ("/pkg/" ++ (pkgName p))
 
 
-data Storage = Storage { mountPoint :: FilePath, pkgData :: [Package] }
+data Storage = Storage {
+    mountPoint :: FilePath,
+    pkgData :: [Package]
+}
 
-instance DocNode Storage where
-    createHtml dev style = do
-        return $ HtmlContent (HtmlTable {tableContent = [[]]})
+instance Renderable Storage where
+    renderAll s = [(labelHtml (mountPoint s))]
+    renderRow s = createDiv "pkg" (renderAll s)
+    staticUrl s = Nothing
 
+
+concatPackages :: [Storage] -> [Package]
+concatPackages s = concat (map pkgData s)
 
 
 -- open statfile in each device
-renderAllPackages :: [Package] -> [HtmlContent]
-renderAllPackages pkg = ([createHtmlTable (storageToHtml pkg)])
+renderAllPackages :: [Storage] -> [HtmlContent]
+renderAllPackages s = ([createHtmlTable (storageToHtml (concatPackages s))])
 
 
 -- filter a particular name
-renderPackage :: [Package] -> String -> [HtmlContent]
-renderPackage pkg name =
-    case (findPackageName pkg name) of
+renderPackage :: [Storage] -> String -> [HtmlContent]
+renderPackage s name =
+    case (findPackageName (concatPackages s) name) of
         Just p -> renderAll p
         Nothing -> [(labelHtml ("Cannot Find " ++ name))]
-
 
 
 -- return all contained unique mime types
@@ -168,7 +209,6 @@ findPackageName (p:pkgs) name =
         Just p
     else
         findPackageName pkgs name
-
 
 
 findStores :: [Storage] -> String -> [Package]
