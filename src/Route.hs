@@ -212,16 +212,6 @@ createPackagePage cfg = do
     return $ PackagePage []
 
 
--- open statfile in each device
-showAllPackages :: [Package] -> [HtmlContent]
-showAllPackages pkg = ([createHtmlTable (storageToHtml pkg)])
-
-
--- filter a particular name
-showPackage :: [Package] -> String -> [HtmlContent]
-showPackage pkg name = ([createHtmlTable (storageToHtml pkg)])
-
-
 -- use all known devices and find by name
 packageTable :: FilePath -> String -> IO [HtmlContent]
 packageTable dir name = do
@@ -229,9 +219,9 @@ packageTable dir name = do
     pkgs <- getAllPackages (deviceMounts mnts)
     if (length name) == 0
     then let title = ("Packages (" ++ (show (length pkgs)) ++ ")") in do
-        return $ (createHtmlHeading 1 title) : (showAllPackages pkgs)
+        return $ (createHtmlHeading 1 title) : (renderAllPackages pkgs)
     else do
-        return $ (createHtmlHeading 1 name) : (showPackage pkgs name)
+        return $ (createHtmlHeading 1 name) : (renderPackage pkgs name)
 
 
 packagePageHandler :: HttpRequest -> IO HttpResponseHandler

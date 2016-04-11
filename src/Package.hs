@@ -48,6 +48,19 @@ instance DocNode Storage where
         return $ HtmlContent (HtmlTable {tableContent = [[]]})
 
 
+
+-- open statfile in each device
+renderAllPackages :: [Package] -> [HtmlContent]
+renderAllPackages pkg = ([createHtmlTable (storageToHtml pkg)])
+
+
+-- filter a particular name
+renderPackage :: [Package] -> String -> [HtmlContent]
+renderPackage pkg name = ([createHtmlTable (storageToHtml pkg)])
+
+
+
+
 -- return all contained unique mime types
 pkgAppendMimeTypes :: [String] -> [PackageFile] -> [String]
 pkgAppendMimeTypes ts (f:fs) =
@@ -56,8 +69,8 @@ pkgAppendMimeTypes ts (f:fs) =
     else pkgAppendMimeTypes (appendUnique ts (fileMime f)) fs
 
 
-pkgMimeTypes :: [PackageFile] -> [String]
-pkgMimeTypes fs = pkgAppendMimeTypes [] fs
+pkgMimeTypes :: Package -> [String]
+pkgMimeTypes p = pkgAppendMimeTypes [] (pkgFiles p)
 
 
 --tz contents = do
@@ -123,7 +136,7 @@ pathsToHtml p = HtmlContent (Heading 3 p)
 
 
 packageToHtml :: Package -> [HtmlContent]
-packageToHtml p = [(createLabel (pkgName p)), (createLabel (show (length (pkgFiles p))))]
+packageToHtml p = [(staticImage "box.svg" "48"), (createLabel (pkgName p)), (createLabel (show (pkgMimeTypes p)))]
 
 
 storageToHtml :: [Package] -> [[HtmlContent]]
