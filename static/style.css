@@ -1,3 +1,7 @@
 body {
     background-color: lightblue;
 }
+
+.tablerow {
+    box-shadow: 0 0 3pt 2pt black;
+}

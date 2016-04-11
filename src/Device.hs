@@ -59,6 +59,13 @@ instance Renderable PartitionStat where
     staticUrl dev = Just $ ("/dev/" ++ (kName dev))
 
 
+renderPartitionInfo :: Partition -> Mount -> IO [HtmlContent]
+renderPartitionInfo p m = do
+    return (title ++ [mountDeviceForm] ++ filelink) where
+        title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
+        filelink = [(generalHref "Browse Files" ("/dev/" ++ (strId p) ++ "/files"))]
+
+
 data PartOwner = PartOwner { partItem :: Partition, partOwner :: Maybe Partition }
 
 

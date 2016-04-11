@@ -122,12 +122,10 @@ partitionInfoPage p = do
     case mnt of
         Just m -> do
             pkgs <- partitionPackageTable (mntPath m)
-            return (newSet, (title ++ [mountDeviceForm] ++ filelink ++ pkgs)) where
-                title = [(createHtmlHeading 3 ((strId p) ++ " (" ++ (mntPath m) ++ ")"))]
-                filelink = [(generalHref "Browse Files" ("/dev/" ++ (strId p) ++ "/files"))]
+            mntInfo <- renderPartitionInfo p m
+            return (newSet, (mntInfo ++ pkgs))
         Nothing -> do
             return (newSet, ([(createHtmlHeading 3 (strId p))] ++ [mountDeviceForm]))
-
 
 
 devicePageHandler :: Partition -> FilePath -> HttpRequest -> IO HttpResponseHandler

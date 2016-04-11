@@ -4,14 +4,23 @@ import Data.List
 import File
 
 
-htmlTagPairs :: String -> [(String, String)] -> String
-htmlTagPairs tag ps = htmlTagOpen tag (map htmlPair ps)
+htmlPair :: (String, String) -> String
+htmlPair (k, v) = k ++ "=\"" ++ v ++ "\""
+
+
+htmlRef :: String -> String
+htmlRef v = htmlPair ("href", v)
+
+
+htmlTagOpenPairs :: String -> [(String, String)] -> String
+htmlTagOpenPairs tag ps = htmlTagOpen tag (map htmlPair ps)
 
 
 htmlTagOpen :: String -> [String] -> String
 htmlTagOpen tag [] = ("<" ++ tag ++ ">")
 htmlTagOpen tag opt = ("<" ++ tag ++ " " ++ opts ++ ">") where
     opts = (intercalate " " opt)
+
 
 htmlTagClose :: String -> String
 htmlTagClose tag = ("</" ++ tag ++ ">")
@@ -25,12 +34,8 @@ htmlTagOpt :: String -> [String] -> String -> String
 htmlTagOpt tag opt item = ((htmlTagOpen tag opt) ++ item ++ (htmlTagClose tag))
 
 
-htmlPair :: (String, String) -> String
-htmlPair (k, v) = k ++ "=\"" ++ v ++ "\""
-
-
-htmlRef :: String -> String
-htmlRef v = htmlPair ("href", v)
+htmlTagPairs :: (Show a) => String -> [(String, String)] -> a -> String
+htmlTagPairs tag ps item = ((htmlTagOpenPairs tag ps) ++ (show item) ++ (htmlTagClose tag))
 
 
 -- transformable elements
@@ -74,7 +79,7 @@ instance HtmlElement HtmlHeader where
     toHtml h = htmlTag "head" ((htmlTag "title" (headerTitle h)) ++ (cssInclude (headerIncludes h)))
 
 cssLink :: String -> String
-cssLink s = htmlTagPairs "link" [("rel", "stylesheet"), ("type", "text/css"), ("href", s)]
+cssLink s = htmlTagOpenPairs "link" [("rel", "stylesheet"), ("type", "text/css"), ("href", s)]
 
 
 cssInclude :: [String] -> String
@@ -128,7 +133,7 @@ toHtmlTable tb = htmlTag "table" (concat $ map toHtmlTableRow tb)
 
 toHtmlTableRow :: [HtmlContent] -> String
 toHtmlTableRow line
-    | length line > 0 = htmlTag "tr" (concat $ map toHtmlTableItem line)
+    | length line > 0 = htmlTagPairs "tr" [("class", "tablerow")] (concat $ map toHtmlTableItem line)
     | otherwise = ""
 
 
