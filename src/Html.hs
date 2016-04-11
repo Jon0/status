@@ -4,6 +4,10 @@ import Data.List
 import File
 
 
+htmlTagPairs :: String -> [(String, String)] -> String
+htmlTagPairs tag ps = htmlTagOpen tag (map htmlPair ps)
+
+
 htmlTagOpen :: String -> [String] -> String
 htmlTagOpen tag [] = ("<" ++ tag ++ ">")
 htmlTagOpen tag opt = ("<" ++ tag ++ " " ++ opts ++ ">") where
@@ -61,10 +65,21 @@ instance HtmlElement HtmlDocument where
 
 
 -- header type
-data HtmlHeader = HtmlHeader String
+data HtmlHeader = HtmlHeader {
+    headerTitle :: String,
+    headerIncludes :: [String]
+}
 
 instance HtmlElement HtmlHeader where
-    toHtml (HtmlHeader s) = htmlTag "head" (htmlTag "title" s)
+    toHtml h = htmlTag "head" ((htmlTag "title" (headerTitle h)) ++ (cssInclude (headerIncludes h)))
+
+cssLink :: String -> String
+cssLink s = htmlTagPairs "link" [("rel", "stylesheet"), ("type", "text/css"), ("href", s)]
+
+
+cssInclude :: [String] -> String
+cssInclude i = concat $ map cssLink i
+
 
 
 -- body type
@@ -200,7 +215,7 @@ linesToHtml strs = (map lineToHtml strs)
 pageWithHostName :: [HtmlContent] -> IO HtmlDocument
 pageWithHostName body = do
     name <- getHostname
-    return $ HtmlDocument (HtmlHeader name) (HtmlBody body)
+    return $ HtmlDocument (HtmlHeader name ["/swc/style.css"]) (HtmlBody body)
 
 
 staticImage :: String -> String -> HtmlContent
