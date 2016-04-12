@@ -239,5 +239,5 @@ umountDevice path = do
 
 
 -- path to content files
-defaultPrefix :: String -> String
-defaultPrefix path = ("/srv/static/" ++ path)
+defaultStaticPrefix :: FilePath -> FilePath -> String
+defaultStaticPrefix base path = (base ++ "/static/" ++ path)

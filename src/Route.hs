@@ -23,9 +23,9 @@ debugPageHandler request = do
     return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
-filePageHandler :: HttpRequest -> IO HttpResponseHandler
-filePageHandler request =
-    let filepath = defaultPrefix (elemOrEmpty 1 (urlSplit request)) in do
+filePageHandler :: FilePath -> HttpRequest -> IO HttpResponseHandler
+filePageHandler base request =
+    let filepath = defaultStaticPrefix base (elemOrEmpty 1 (urlSplit request)) in do
         (newSet, file) <- contentOpen emptyStreamSet filepath
         case file of
             Nothing -> do
@@ -40,6 +40,7 @@ data RouteData = RouteData { routes :: [String] }
 
 data MainPage = MainPage {
     mainItems :: [String],
+    srvDir :: FilePath,
     devPage :: DevicePage
 }
 
@@ -52,7 +53,7 @@ instance RouteType MainPage where
 createMainPage :: Config -> IO MainPage
 createMainPage cfg = do
     devp <- createDevicePage cfg
-    return $ MainPage [] devp
+    return $ MainPage [] (contentPath cfg) devp
 
 
 mainPageHandler :: HttpRequest -> IO HttpResponseHandler
@@ -63,11 +64,11 @@ mainPageHandler request = do
 
 
 mainPageMap :: MainPage -> String -> Maybe RouteItem
-mainPageMap mainpage path
+mainPageMap m path
     | path == "" = Just $ RouteLeaf mainPageHandler
-    | path == "dev" = Just $ routeMap (devPage mainpage) --RouteNode devicePageMap
+    | path == "dev" = Just $ routeMap (devPage m)
     | path == "pkg" = Just $ RouteNode packagePageMap
-    | path == "swc" = Just $ RouteLeaf filePageHandler
+    | path == "swc" = Just $ RouteLeaf (filePageHandler (srvDir m))
     | otherwise = Just $ RouteLeaf debugPageHandler
 
 
