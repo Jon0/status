@@ -59,11 +59,10 @@ instance Table PackageFile where
     showLine f = [(relativePath f), (fileMime f), (show (fileHash f)), (show (fileSize f)), (show (fileShow f))]
 
 
-instance Renderable PackageFile where
-    renderAll p = [(labelHtml (relativePath p)), (labelHtml (fileMime p)), (labelHtml (show (fileHash p))), (labelHtml (show (fileSize p)))]
-    renderRow p = createDiv "pkg" (renderAll p)
-    staticUrl p = Nothing
-
+instance Renderable (Package, PackageFile) where
+    renderAll (p, f) = [(renderableHref (relativePath f) (p, f)), (labelHtml (fileMime f)), (labelHtml (show (fileHash f))), (labelHtml (show (fileSize f)))]
+    renderRow (p, f) = createDiv "pkg" (renderAll (p, f))
+    staticUrl (p, f) = Just ("/pkg/" ++ (pkgName p) ++ "/" ++ (relativePath f))
 
 
 data Package = Package {
@@ -72,7 +71,7 @@ data Package = Package {
 }
 
 instance Renderable Package where
-    renderAll p = [(staticImage "box.svg" "48"), (labelHtml (pkgName p)), (renderList (pkgFiles p))]
+    renderAll p = [(staticImage "box.svg" "48"), (labelHtml (pkgName p)), (renderZipDiv p (pkgFiles p))]
     renderRow p = createDiv "pkg" (renderAll p)
     staticUrl p = Just $ ("/pkg/" ++ (pkgName p))
 
@@ -181,7 +180,7 @@ pathsToHtml p = HtmlContent (Heading 3 p)
 
 
 packageToHtml :: Package -> [HtmlContent]
-packageToHtml p = [(staticImage "box.svg" "48"), (generalHref (pkgName p) ("/pkg/" ++ (pkgName p))), (createLabel (show (pkgMimeTypes p)))]
+packageToHtml p = [(staticImage "box.svg" "48"), (renderableHref (pkgName p) p), (createLabel (show (pkgMimeTypes p)))]
 
 
 storageToHtml :: [Package] -> [[HtmlContent]]

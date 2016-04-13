@@ -21,6 +21,14 @@ class Renderable r where
     staticUrl :: r -> Maybe String
 
 
+renderableHref :: (Renderable r) => String -> r -> HtmlContent
+renderableHref label rd =
+    case (staticUrl rd) of
+        Nothing ->
+            labelHtml $ htmlTagOpt "a" [] label
+        Just link ->
+            labelHtml $ htmlTagOpt "a" [(htmlRef link)] label
+
 
 data RenderMode = Basic | All
 data DocStyle = DocStyle { renderMode :: RenderMode } --deriving (Show)
