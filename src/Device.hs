@@ -11,6 +11,7 @@ import Html
 import List
 import Package
 import Template
+import Util
 
 
 -- Header data for block devices
@@ -177,12 +178,7 @@ toMountTable ms = linesToHtml (showTable ms)
 
 -- finding a mount by name
 findMountName :: [Mount] -> String -> Maybe Mount
-findMountName [] _ = Nothing
-findMountName (x:xs) s =
-    if (deviceName x) == s
-    then Just x
-    else findMountName xs s
-
+findMountName m n = findElement (\x -> (deviceName x == n)) m
 
 
 -- update using partitions file

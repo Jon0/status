@@ -81,6 +81,7 @@ data DevicePage = DevicePage {
     partStreams :: StreamSet
 }
 
+
 instance RouteType DevicePage where
     routeName dev = "dev"
     routeKey dev = []
@@ -192,7 +193,6 @@ noDevicePageHandler request = do
     return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
-
 partitionPageMap :: Partition -> FilePath -> String -> Maybe RouteItem
 partitionPageMap part mountpath path
         | path == "files" = Just $ RouteLeaf (deviceFilePageHandler part mountpath)
@@ -227,11 +227,16 @@ createPackagePage cfg = do
     return $ PackagePage [] ch stores
 
 
+packagePageItemHandler :: [Storage] -> Package -> PackageFile -> HttpRequest -> IO HttpResponseHandler
+packagePageItemHandler stores pkg file request = do
+    html <- pageWithHostName ((createHtmlHeading 1 (relativePath file)) : (renderPackageFile stores pkg file))
+    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
+
+
 packagePageHandler :: [Storage] -> Package -> HttpRequest -> IO HttpResponseHandler
-packagePageHandler stores pkg request =
-    let pkgStores = filterStores stores (pkgName pkg) in do
-        html <- pageWithHostName ((createHtmlHeading 1 (pkgName pkg)) : (renderPackage pkgStores (pkgName pkg)))
-        return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
+packagePageHandler stores pkg request = do
+    html <- pageWithHostName ((createHtmlHeading 1 (pkgName pkg)) : (renderPackage stores (pkgName pkg)))
+    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
 packageBasePageHandler :: [Storage] -> HttpRequest -> IO HttpResponseHandler
@@ -241,13 +246,22 @@ packageBasePageHandler stores request =
         return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
+-- pass only storage which include this package
+packageItemPageMap :: [Storage] -> Package -> String -> Maybe RouteItem
+packageItemPageMap s p "" = Just $ RouteLeaf (packagePageHandler s p)
+packageItemPageMap s p name =
+    case findPackageFileName p name of
+        Nothing -> Nothing
+        Just f -> Just $ RouteLeaf (packagePageItemHandler s p f)
+
+
 -- does not know which packages exist
 packagePageMap :: PackagePage -> String -> Maybe RouteItem
 packagePageMap pkgp "" = Just $ RouteLeaf (packageBasePageHandler (storageList pkgp))
 packagePageMap pkgp name =
     case findPackageName (concatMap pkgData (storageList pkgp)) name of
         Nothing -> Nothing
-        Just p -> Just $ RouteLeaf (packagePageHandler (storageList pkgp) p)
+        Just p -> Just $ RouteNode (packageItemPageMap (filterStores (storageList pkgp) (pkgName p)) p)
 
 
 -- read and reply to a request, given a socket handle

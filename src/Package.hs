@@ -98,6 +98,10 @@ instance Renderable Storage where
     staticUrl s = Nothing
 
 
+renderPackageFile :: [Storage] -> Package -> PackageFile -> [HtmlContent]
+renderPackageFile stores pkg file = renderAll (pkg, file)
+
+
 -- open statfile in each device
 renderAllPackages :: [Storage] -> [HtmlContent]
 renderAllPackages s = ([createHtmlTable (storageToHtml (concatMap pkgData s))])
@@ -208,13 +212,11 @@ toStorageTable st =  (storageTableHeader st) : (storageToHtml (pkgData st))
 
 -- finds a package by name
 findPackageName :: [Package] -> String -> Maybe Package
-findPackageName [] _ = Nothing
-findPackageName (p:pkgs) name =
-    if (pkgName p) == name
-    then
-        Just p
-    else
-        findPackageName pkgs name
+findPackageName p n = findElement (\x -> (pkgName x == n)) p
+
+-- finds item in a package
+findPackageFileName :: Package -> String -> Maybe PackageFile
+findPackageFileName p n = findElement (\x -> (relativePath x == n)) (pkgFiles p)
 
 
 findStores :: [Storage] -> String -> [Package]

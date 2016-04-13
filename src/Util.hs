@@ -89,6 +89,17 @@ element index array
     | otherwise = Nothing
 
 
+findElement :: (a -> Bool) -> [a] -> Maybe a
+findElement _ [] = Nothing
+findElement fn (x:xs) =
+    if (fn x)
+    then
+        Just x
+    else
+        findElement fn xs
+
+
+
 -- string of digits converted to char
 hexDigitToChar :: String -> Char
 hexDigitToChar xs =
