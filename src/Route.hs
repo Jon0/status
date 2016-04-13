@@ -16,6 +16,11 @@ import Template
 import Util
 
 
+notFoundHandler :: IO HttpResponseHandler
+notFoundHandler = do
+    html <- pageWithHostName [(labelHtml "Not Found")]
+    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
+
 
 debugPageHandler :: HttpRequest -> IO HttpResponseHandler
 debugPageHandler request = do
@@ -233,10 +238,11 @@ createPackagePage cfg = do
 
 
 packagePageItemHandler :: [Storage] -> Package -> PackageFile -> HttpRequest -> IO HttpResponseHandler
-packagePageItemHandler [] _ _ _ = do
-    html <- pageWithHostName [(labelHtml "Not Found")]
-    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
-packagePageItemHandler (x:xs) pkg file request = filePageResponse (packageFileLocation x pkg file)
+packagePageItemHandler [] _ _ _ = notFoundHandler
+packagePageItemHandler (x:xs) pkg file request =
+    case (packageFileLocation x pkg file) of
+        Just p -> filePageResponse p
+        Nothing -> notFoundHandler
 
 
 packagePageHandler :: [Storage] -> Package -> HttpRequest -> IO HttpResponseHandler
