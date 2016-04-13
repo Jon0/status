@@ -37,11 +37,12 @@ filePageHandler base request =
 -- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
 
-
+-- requires reading all files before matching routes
 data MainPage = MainPage {
     mainItems :: [String],
     srvDir :: FilePath,
-    devPage :: DevicePage
+    devPage :: DevicePage,
+    pkgPage :: PackagePage
 }
 
 instance RouteType MainPage where
@@ -53,7 +54,8 @@ instance RouteType MainPage where
 createMainPage :: Config -> IO MainPage
 createMainPage cfg = do
     devp <- createDevicePage cfg
-    return $ MainPage [] (contentPath cfg) devp
+    pkgp <- createPackagePage cfg
+    return $ MainPage [] (contentPath cfg) devp pkgp
 
 
 mainPageHandler :: HttpRequest -> IO HttpResponseHandler
@@ -67,7 +69,7 @@ mainPageMap :: MainPage -> String -> Maybe RouteItem
 mainPageMap m path
     | path == "" = Just $ RouteLeaf mainPageHandler
     | path == "dev" = Just $ routeMap (devPage m)
-    | path == "pkg" = Just $ RouteNode packagePageMap
+    | path == "pkg" = Just $ routeMap (pkgPage m)
     | path == "swc" = Just $ RouteLeaf (filePageHandler (srvDir m))
     | otherwise = Just $ RouteLeaf debugPageHandler
 
@@ -206,37 +208,46 @@ devicePageMap devpage path =
 
 
 -- show available packages
-data PackagePage = PackagePage { packageItems :: [String] }
+data PackagePage = PackagePage {
+    packageItems :: [String],
+    containerList :: [ContainerHeader],
+    storageList :: [Storage]
+}
+
+instance RouteType PackagePage where
+    routeName pkg = "pkg"
+    routeKey pkg = []
+    routeMap pkg = RouteNode (packagePageMap pkg)
+
 
 createPackagePage :: Config -> IO PackagePage
 createPackagePage cfg = do
-    return $ PackagePage []
+    ch <- allContainerDevices (mountPointDir (contentPath cfg))
+    stores <- mapM containerAllPkg ch
+    return $ PackagePage [] ch stores
 
 
--- use all known devices and find by name
-packageTable :: FilePath -> String -> IO [HtmlContent]
-packageTable dir name = do
-    mnts <- mountsByPath (mountPointDir dir)
-    let cts = (map containerHeader (deviceMounts mnts)) in do
-        stores <- mapM containerData cts
-        if (length name) == 0
-        then let title = ("Packages (" ++ (show (length stores)) ++ " Devices)") in do
-            return $ (createHtmlHeading 1 title) : (renderAllPackages stores)
-        else do
-            pkgStores <- getPkgContainers cts name
-            return $ (createHtmlHeading 1 name) : (renderPackage pkgStores name)
+packagePageHandler :: [Storage] -> Package -> HttpRequest -> IO HttpResponseHandler
+packagePageHandler stores pkg request =
+    let pkgStores = filterStores stores (pkgName pkg) in do
+        html <- pageWithHostName ((createHtmlHeading 1 (pkgName pkg)) : (renderPackage pkgStores (pkgName pkg)))
+        return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
-packagePageHandler :: HttpRequest -> IO HttpResponseHandler
-packagePageHandler request = do
-    body <- packageTable "/srv" (subUrl 1 request)
-    html <- pageWithHostName body
-    return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
+packageBasePageHandler :: [Storage] -> HttpRequest -> IO HttpResponseHandler
+packageBasePageHandler stores request =
+    let title = ("Packages (" ++ (show (length stores)) ++ " Devices)") in do
+        html <- pageWithHostName ((createHtmlHeading 1 title) : (renderAllPackages stores))
+        return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
 -- does not know which packages exist
-packagePageMap :: String -> Maybe RouteItem
-packagePageMap path = Just $ RouteLeaf packagePageHandler
+packagePageMap :: PackagePage -> String -> Maybe RouteItem
+packagePageMap pkgp "" = Just $ RouteLeaf (packageBasePageHandler (storageList pkgp))
+packagePageMap pkgp name =
+    case findPackageName (concatMap pkgData (storageList pkgp)) name of
+        Nothing -> Nothing
+        Just p -> Just $ RouteLeaf (packagePageHandler (storageList pkgp) p)
 
 
 -- read and reply to a request, given a socket handle

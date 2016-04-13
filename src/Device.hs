@@ -90,8 +90,8 @@ instance Table Mount where
 -- list of all mounts
 data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 
-
-data ManagedMount = ManagedMount { autoMount :: Bool, devName :: String }
+-- auto mount devices by matching uuid
+data ManagedMount = ManagedMount { autoMount :: Bool, devUuid :: String }
 
 
 partitionStatMount :: PartitionStat -> Maybe Mount
@@ -208,3 +208,11 @@ mountsByPath :: FilePath -> IO MountPath
 mountsByPath path = do
     dirs <- showDirectory path
     return $ MountPath path (mapMaybe dirToMount (zip (cycle [path]) dirs))
+
+
+-- get all available containers
+-- only finds devices mounted at /srv/storage
+allContainerDevices :: FilePath -> IO [ContainerHeader]
+allContainerDevices path = do
+    mnts <- mountsByPath path
+    return (map containerHeader (deviceMounts mnts))

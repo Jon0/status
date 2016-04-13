@@ -14,13 +14,24 @@ import Template
 import Util
 
 
-
 -- packages are stored in containers
 -- generalising types of devices
 data ContainerHeader = ContainerHeader {
     containerId :: String,
-    containerData :: IO Storage
+    containerAllPkg :: IO Storage
 }
+
+containerOnePkg :: ContainerHeader -> String -> IO (Maybe Package)
+containerOnePkg ct name = do
+    stores <- containerAllPkg ct
+    return $ findPackageName (pkgData stores) name
+
+
+containersOnePkg :: [ContainerHeader] -> String -> IO (Maybe Package)
+containersOnePkg ct name = do
+    stores <- mapM containerAllPkg ct
+    return $ findPackageName (concatMap pkgData stores) name
+
 
 class Container c where
     containerHeader :: c -> ContainerHeader
@@ -37,7 +48,7 @@ filterStores (d:devs) name =
 
 getPkgContainers :: [ContainerHeader] -> String -> IO [Storage]
 getPkgContainers cs name = do
-    stores <- mapM containerData cs
+    stores <- mapM containerAllPkg cs
     return $ filterStores stores name
 
 
@@ -87,19 +98,15 @@ instance Renderable Storage where
     staticUrl s = Nothing
 
 
-concatPackages :: [Storage] -> [Package]
-concatPackages s = concat (map pkgData s)
-
-
 -- open statfile in each device
 renderAllPackages :: [Storage] -> [HtmlContent]
-renderAllPackages s = ([createHtmlTable (storageToHtml (concatPackages s))])
+renderAllPackages s = ([createHtmlTable (storageToHtml (concatMap pkgData s))])
 
 
 -- filter a particular name
 renderPackage :: [Storage] -> String -> [HtmlContent]
 renderPackage s name =
-    case (findPackageName (concatPackages s) name) of
+    case (findPackageName (concatMap pkgData s) name) of
         Just p -> (renderAll p) ++ [(renderListDiv s)]
         Nothing -> [(labelHtml ("Cannot Find " ++ name))]
 
