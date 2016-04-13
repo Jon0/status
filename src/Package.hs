@@ -89,8 +89,12 @@ instance Renderable Package where
 
 data Storage = Storage {
     mountPoint :: FilePath,
-    pkgData :: [Package]
+    pkgPathPairs :: [(FilePath, Package)]
 }
+
+pkgData :: Storage -> [Package]
+pkgData s = let (a, b) = unzip (pkgPathPairs s) in b
+
 
 instance Renderable Storage where
     renderAll s = [(labelHtml ("Location: " ++ (mountPoint s)))]
@@ -142,14 +146,20 @@ strLinesToFiles ('>':str) = mapMaybe readLine (map (wordDelim (==';')) (lines st
 strLinesToFiles _ = []
 
 
-strPartToPackage :: String -> [Package]
+strPartPathName :: [String] -> (FilePath, String)
+strPartPathName [] = ("", "")
+strPartPathName (x:[]) = (x, x)
+strPartPathName (xa:xb:xs) = (xa, xb)
+
+strPartToPackage :: String -> [(FilePath, Package)]
 strPartToPackage "" = []
 strPartToPackage str =
-        let (name, pkgs) = break (=='>') str in
-            [(Package name (strLinesToFiles pkgs))]
+        let (heading, pkgs) = break (=='>') str in
+            let (dirpath, name) = strPartPathName (wordDelim (==';') heading) in
+                [(dirpath, (Package name (strLinesToFiles pkgs)))]
 
 
-strToPackages :: String -> [Package]
+strToPackages :: String -> [(FilePath, Package)]
 strToPackages "" = []
 strToPackages str =
     let (a, b) = break (=='<') str in
@@ -160,8 +170,8 @@ strToPackages str =
 
 -- get packages stored on a single device
 loadPackageData :: String -> String -> IO Storage
-loadPackageData mount datafile = do
-    content <- fileContent (mount ++ "/" ++ datafile)
+loadPackageData mount statfile = do
+    content <- fileContent (mount ++ "/" ++ statfile)
     return $ Storage mount (strToPackages content)
 
 
@@ -171,20 +181,20 @@ packageFileToStr :: PackageFile -> String
 packageFileToStr f = intercalate ";" (showLine f)
 
 
-writePackageHead :: Package -> String
-writePackageHead pkg = "<" ++ (pkgName pkg) ++ ">\n"
+writePackageHead :: (FilePath, Package) -> String
+writePackageHead (path, pkg) = "<" ++ path ++ ";" ++ (pkgName pkg) ++ ">\n"
 
 
-writePackageBody :: Package -> String
-writePackageBody pkg =  (intercalate "\n" (map packageFileToStr (pkgFiles pkg)) ++ "\n")
+writePackageBody :: (FilePath, Package) -> String
+writePackageBody (path, pkg) =  (intercalate "\n" (map packageFileToStr (pkgFiles pkg)) ++ "\n")
 
 
-packageToStr :: Package -> String
+packageToStr :: (FilePath, Package) -> String
 packageToStr pkg = ((writePackageHead pkg) ++ (writePackageBody pkg) ++ "\n")
 
 
 -- save to file
-createPackageDatabase :: FilePath -> [Package] -> IO ()
+createPackageDatabase :: FilePath -> [(FilePath, Package)] -> IO ()
 createPackageDatabase path pkgs = do
     writeFile path (concat (map packageToStr pkgs))
 
@@ -248,16 +258,16 @@ generatePackageFile p = do
     return $ PackageFile p (showFileMime p) hs sz True
 
 -- generate package data with mountpoint and subdirectory name
-generatePackage :: FilePath -> IO Package
-generatePackage path = do
-    files <- allSubFiles path
+generatePackage :: (FilePath, FilePath) -> IO (FilePath, Package)
+generatePackage (mount, path) = do
+    files <- allSubFiles (mount ++ "/" ++ path)
     pkgFiles <- mapM generatePackageFile files
-    return $ Package (pathToPackageName path) pkgFiles
+    return $ (path, (Package (pathToPackageName path) pkgFiles))
 
 
 -- one package per subdirectory
-generatePackages :: FilePath -> IO [Package]
-generatePackages path = do
-    items <- showDirectory path
-    pkgs <- mapM generatePackage (prefixSet (path ++ "/") items)
+generatePackages :: FilePath -> FilePath -> IO [(FilePath, Package)]
+generatePackages mount path = do
+    items <- showDirectory (mount ++ "/" ++ path)
+    pkgs <- mapM generatePackage (zip (cycle [(mount ++ "/")]) (prefixSet (path ++ "/") items))
     return pkgs

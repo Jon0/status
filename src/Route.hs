@@ -146,24 +146,24 @@ devicePageHandler part mountpath request = do
 
 
 -- generate file database
-partitionFileQuery :: DirectoryUrl -> String -> IO ()
-partitionFileQuery d s = do
-    putStrLn ((showDirectoryUrl d) ++ " -> " ++ s)
+partitionFileQuery :: Mount -> DirectoryUrl -> String -> IO ()
+partitionFileQuery mount dir s = do
+    putStrLn ((showDirectoryUrl dir) ++ " -> " ++ s)
     if s == "?sort=1"
     then do
-        pkgs <- generatePackages (fsLocation d)
-        createPackageDatabase ((duMount d) ++ "/statfile") pkgs
+        pkgs <- generatePackages (mntPath mount) (relativeToMount mount (fsLocation dir))
+        createPackageDatabase ((duMount dir) ++ "/statfile") pkgs
     else do
         return ()
 
 
 -- return generated directory view or a file
-partitionFileToContent :: StreamSet -> Partition -> DirectoryUrl -> String -> IO (StreamSet, StreamTransfer)
-partitionFileToContent set part du query = do
+partitionFileToContent :: StreamSet -> Partition -> Mount -> DirectoryUrl -> String -> IO (StreamSet, StreamTransfer)
+partitionFileToContent set part mnt du query = do
     isDir <- doesDirectoryExist (fsLocation du)
     if isDir
     then do
-        partitionFileQuery du query
+        partitionFileQuery mnt du query
         content <- dirTemplate du
         html <- pageWithHostName content
         return (set, (createStringTransfer (toHtml html)))
@@ -183,7 +183,7 @@ deviceFilePageHandler part subdir request = do
     case mnt of
         Just m -> let (u, d) = (breakRequest request 3) in
                     let du = (DirectoryUrl (mntPath m) u d) in do
-                        (setB, str) <- partitionFileToContent setA part du (query request)
+                        (setB, str) <- partitionFileToContent setA part m du (query request)
                         return $ HttpResponseHandler (streamResponse str) setB
         Nothing -> do
             html <- pageWithHostName [(createHtmlHeading 3 ((strId part) ++ " is not mounted"))]

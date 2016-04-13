@@ -88,6 +88,10 @@ instance Table Mount where
     showLine m = [(deviceName m), (mntPath m)]
 
 
+relativeToMount :: Mount -> FilePath -> FilePath
+relativeToMount m p = stringRemove ((mntPath m) ++ "/") p
+
+
 -- list of all mounts
 data MountPath = MountPath { mountPath :: FilePath, deviceMounts :: [Mount] }
 

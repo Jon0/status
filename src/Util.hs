@@ -99,6 +99,15 @@ findElement fn (x:xs) =
         findElement fn xs
 
 
+-- remove prefix x from y until non matching
+stringRemove :: (Eq a) => [a] -> [a] -> [a]
+stringRemove [] y = y
+stringRemove x [] = []
+stringRemove (x:xs) yr@(y:ys) =
+    if x == y
+    then stringRemove xs ys
+    else yr
+
 
 -- string of digits converted to char
 hexDigitToChar :: String -> Char
