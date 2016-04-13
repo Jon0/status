@@ -81,6 +81,10 @@ data Package = Package {
     pkgFiles :: [PackageFile]
 }
 
+instance Eq Package where
+    (==) a b = (pkgName a) == (pkgName b)
+
+
 instance Renderable Package where
     renderAll p = [(staticImage "box.svg" "48"), (labelHtml (pkgName p)), (renderZipDiv p (pkgFiles p))]
     renderRow p = createDiv "pkg" (renderAll p)
@@ -94,6 +98,9 @@ data Storage = Storage {
 
 pkgData :: Storage -> [Package]
 pkgData s = let (a, b) = unzip (pkgPathPairs s) in b
+
+instance Show Storage where
+    show s = (mountPoint s)
 
 
 instance Renderable Storage where
@@ -213,6 +220,15 @@ packageToHtml p = [(staticImage "box.svg" "48"), (renderableHref (pkgName p) p),
 
 storageToHtml :: [Package] -> [[HtmlContent]]
 storageToHtml ps = (map packageToHtml ps)
+
+
+-- include extra device information
+packageDevToHtml :: ([Storage], Package) -> [HtmlContent]
+packageDevToHtml (s, p) = [(staticImage "box.svg" "48"), (renderableHref (pkgName p) p), (createLabel (show (pkgMimeTypes p))), (createLabel (show s))]
+
+
+storageDevToHtml :: [Storage] -> [[HtmlContent]]
+storageDevToHtml stores = (map packageDevToHtml (uniqueMap pkgData stores))
 
 
 storageSize :: Storage -> String

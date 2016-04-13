@@ -9,6 +9,33 @@ map2D _ [] = []
 map2D fn (x:xs) = (map fn x) : (map2D fn xs)
 
 
+-- each element only appears once in result
+uniqueFilter :: (Eq a) => [a] -> [a]
+uniqueFilter [] = []
+uniqueFilter (x:xs) =
+    if elem x xs
+    then uniqueFilter xs
+    else x : uniqueFilter xs
+
+-- is a value reachable using a given key
+uniqueElem :: (Eq a) => (r -> [a]) -> a -> r -> Bool
+uniqueElem fn key val = elem key (fn val)
+
+
+-- need a -> [r] for zip
+uniqueInverse :: (Eq a) => (r -> [a]) -> [r] -> a -> [r]
+uniqueInverse fn vals key = filter (uniqueElem fn key) vals
+
+-- knowing values to many keys as a function,
+-- give keys and all the values
+uniqueZip :: (Eq a) => (r -> [a]) -> [a] -> [r] -> [([r], a)]
+uniqueZip fn keys vals = zip (map (uniqueInverse fn vals) keys) keys
+
+
+uniqueMap :: (Eq a) => (r -> [a]) -> [r] -> [([r], a)]
+uniqueMap fn vals = uniqueZip fn (uniqueFilter (concatMap fn vals)) vals
+
+
 -- append an item if an equal item does not exist
 appendUnique :: (Eq a) => [a] -> a -> [a]
 appendUnique [] it = [it]
