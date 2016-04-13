@@ -98,6 +98,10 @@ instance Renderable Storage where
     staticUrl s = Nothing
 
 
+packageFileLocation :: Storage -> Package -> PackageFile -> FilePath
+packageFileLocation s pkg file = ((mountPoint s) ++ "/" ++ (pkgName pkg) ++ "/" ++ (relativePath file))
+
+
 renderPackageFile :: [Storage] -> Package -> PackageFile -> [HtmlContent]
 renderPackageFile stores pkg file = renderAll (pkg, file)
 

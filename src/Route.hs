@@ -23,15 +23,20 @@ debugPageHandler request = do
     return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
 
 
+-- opens and returns a file
+filePageResponse :: FilePath -> IO HttpResponseHandler
+filePageResponse filepath = do
+    putStrLn ("Opening " ++ filepath)
+    (newSet, file) <- contentOpen emptyStreamSet filepath
+    case file of
+        Nothing -> do
+            return $ HttpResponseHandler (generalResponse "Not found") newSet
+        Just dat -> do
+            return $ HttpResponseHandler (streamResponse (createStreamTransfer dat (Just $ showFileMime filepath))) newSet
+
+
 filePageHandler :: FilePath -> HttpRequest -> IO HttpResponseHandler
-filePageHandler base request =
-    let filepath = defaultStaticPrefix base (elemOrEmpty 1 (urlSplit request)) in do
-        (newSet, file) <- contentOpen emptyStreamSet filepath
-        case file of
-            Nothing -> do
-                return $ HttpResponseHandler (generalResponse "Not found") newSet
-            Just dat -> do
-                return $ HttpResponseHandler (streamResponse (createStreamTransfer dat (Just $ showFileMime filepath))) newSet
+filePageHandler base request = filePageResponse (defaultStaticPrefix base (elemOrEmpty 1 (urlSplit request)))
 
 
 -- a data file containing route information
@@ -228,9 +233,10 @@ createPackagePage cfg = do
 
 
 packagePageItemHandler :: [Storage] -> Package -> PackageFile -> HttpRequest -> IO HttpResponseHandler
-packagePageItemHandler stores pkg file request = do
-    html <- pageWithHostName ((createHtmlHeading 1 (relativePath file)) : (renderPackageFile stores pkg file))
+packagePageItemHandler [] _ _ _ = do
+    html <- pageWithHostName [(labelHtml "Not Found")]
     return $ HttpResponseHandler (generalResponse (toHtml html)) emptyStreamSet
+packagePageItemHandler (x:xs) pkg file request = filePageResponse (packageFileLocation x pkg file)
 
 
 packagePageHandler :: [Storage] -> Package -> HttpRequest -> IO HttpResponseHandler
