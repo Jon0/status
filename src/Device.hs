@@ -18,6 +18,9 @@ import Util
 -- Elements are either devices or partitions
 data Partition = Partition { majorId :: Int, minorId :: Int, blocks :: Int, strId :: String }
 
+instance Eq Partition where
+    (==) a b = ((majorId a) == (majorId b)) && ((minorId a) == (minorId b))
+
 instance Table Partition where
     -- order: major, minor, blocks, name
     readLine (a:b:c:d:[]) = case (readMaybe a :: Maybe Int, readMaybe b :: Maybe Int, readMaybe c :: Maybe Int) of
@@ -27,6 +30,8 @@ instance Table Partition where
 
     --showLine :: rowType -> [String]
     showLine ds = [(show (majorId ds)), (show (minorId ds)), (show (blocks ds)), (strId ds)]
+
+    keyOrder a b = compare (compare (majorId a) (majorId b)) (compare (minorId a) (minorId b))
 
 
 -- a drive containing partitions
@@ -78,6 +83,9 @@ data PartOwner = PartOwner { partItem :: Partition, partOwner :: Maybe Partition
 -- filepath where a device is mounted
 data Mount = Mount { deviceName :: String, mntPath :: FilePath }
 
+instance Eq Mount where
+    (==) a b = ((deviceName a) == (deviceName b))
+
 -- collect packages contained by this device
 instance Container Mount where
     containerHeader m = ContainerHeader (deviceName m) (loadPackageData (mntPath m) "statfile")
@@ -86,6 +94,7 @@ instance Container Mount where
 instance Table Mount where
     readLine (a:b:xs) = Just $ Mount a b
     showLine m = [(deviceName m), (mntPath m)]
+    keyOrder a b = compare (deviceName a) (deviceName b)
 
 
 relativeToMount :: Mount -> FilePath -> FilePath

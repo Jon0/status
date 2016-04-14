@@ -60,6 +60,9 @@ data PackageFile = PackageFile {
     fileShow :: Bool
 }
 
+instance Eq PackageFile where
+    (==) a b = (relativePath a) == (relativePath b)
+
 
 instance Table PackageFile where
     readLine (n:t:h:s:v:[]) = case (readMaybe h :: Maybe Integer, readMaybe s :: Maybe Integer, readMaybe v :: Maybe Bool) of
@@ -68,6 +71,8 @@ instance Table PackageFile where
     readLine _ = Nothing
 
     showLine f = [(relativePath f), (fileMime f), (show (fileHash f)), (show (fileSize f)), (show (fileShow f))]
+
+    keyOrder a b = compare (relativePath a) (relativePath b)
 
 
 instance Renderable (Package, PackageFile) where
@@ -122,7 +127,7 @@ renderPackageFile stores pkg file = renderAll (pkg, file)
 
 -- open statfile in each device
 renderAllPackages :: [Storage] -> [HtmlContent]
-renderAllPackages s = ([createHtmlTable (storageToHtml (concatMap pkgData s))])
+renderAllPackages s = ([createHtmlTable (storageDevToHtml packageDevOrdering s)])
 
 
 -- filter a particular name
@@ -222,13 +227,17 @@ storageToHtml :: [Package] -> [[HtmlContent]]
 storageToHtml ps = (map packageToHtml ps)
 
 
+packageDevOrdering :: ([Storage], Package) -> ([Storage], Package) -> Ordering
+packageDevOrdering (sa, pa) (sb, pb) = compare (pkgName pa) (pkgName pb)
+
+
 -- include extra device information
 packageDevToHtml :: ([Storage], Package) -> [HtmlContent]
 packageDevToHtml (s, p) = [(staticImage "box.svg" "48"), (renderableHref (pkgName p) p), (createLabel (show (pkgMimeTypes p))), (createLabel (show s))]
 
 
-storageDevToHtml :: [Storage] -> [[HtmlContent]]
-storageDevToHtml stores = (map packageDevToHtml (uniqueMap pkgData stores))
+storageDevToHtml :: (([Storage], Package) -> ([Storage], Package) -> Ordering) -> [Storage] -> [[HtmlContent]]
+storageDevToHtml order stores = (map packageDevToHtml (sortBy order (uniqueMap pkgData stores)))
 
 
 storageSize :: Storage -> String

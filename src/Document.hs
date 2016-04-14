@@ -40,9 +40,10 @@ class DocNode d where
 
 
 -- Table is a subtype of DocNode
-class Table rowType where
+class (Eq rowType) => Table rowType where
     readLine :: [String] -> Maybe rowType
     showLine :: rowType -> [String]
+    keyOrder :: rowType -> rowType -> Ordering
 
 
 data TableFile = TableFile { tablePath :: FilePath }
