@@ -9,7 +9,7 @@ zipCycle x y = zip (cycle [x]) y
 
 
 zipPrefix :: [a] -> [[a]] -> [([a], [a])]
-zipPrefix x ls = zip (map (mappend x) ls) ls
+zipPrefix x ls = zip (map (x ++) ls) ls
 
 
 map2D :: (a -> a) -> [[a]] -> [[a]]
