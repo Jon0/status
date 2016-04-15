@@ -4,6 +4,14 @@ import Data.Char
 import Numeric
 
 
+zipCycle :: a -> [b] -> [(a, b)]
+zipCycle x y = zip (cycle [x]) y
+
+
+zipPrefix :: [a] -> [[a]] -> [([a], [a])]
+zipPrefix x ls = zip (map (mappend x) ls) ls
+
+
 map2D :: (a -> a) -> [[a]] -> [[a]]
 map2D _ [] = []
 map2D fn (x:xs) = (map fn x) : (map2D fn xs)

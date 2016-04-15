@@ -61,7 +61,7 @@ data PackageFile = PackageFile {
 }
 
 instance Eq PackageFile where
-    (==) a b = (relativePath a) == (relativePath b)
+    (==) a b = ((relativePath a) == (relativePath b)) && ((fileHash a) == (fileHash b))
 
 
 instance Table PackageFile where
@@ -279,21 +279,21 @@ pathToPackageName :: FilePath -> String
 pathToPackageName path = map replaceBrackets (takeFileName path)
 
 
-generatePackageFile :: FilePath -> IO PackageFile
-generatePackageFile p = do
-    hs <- (readFileHash p)
-    sz <- (readFileSize p)
-    case filePathMimeMaybe p of
+generatePackageFile :: (FilePath, FilePath) -> IO PackageFile
+generatePackageFile (full, rel) = do
+    hs <- (readFileHash full)
+    sz <- (readFileSize full)
+    case filePathMimeMaybe rel of
         Just mt -> do
-            return $ PackageFile p mt hs sz True
+            return $ PackageFile rel mt hs sz True
         Nothing -> do
-            return $ PackageFile p [] hs sz True
+            return $ PackageFile rel [] hs sz True
 
 -- generate package data with mountpoint and subdirectory name
 generatePackage :: (FilePath, FilePath) -> IO (FilePath, Package)
 generatePackage (mount, path) = do
     files <- allSubFiles (mount ++ "/" ++ path)
-    pkgFiles <- mapM generatePackageFile files
+    pkgFiles <- mapM generatePackageFile (zipPrefix (mount ++ "/" ++ path ++ "/") files)
     return $ (path, (Package (pathToPackageName path) pkgFiles))
 
 
