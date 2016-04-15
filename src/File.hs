@@ -1,6 +1,6 @@
 module File where
 
-import qualified Data.ByteString
+import qualified Data.ByteString.Lazy as BStr
 import Control.Exception
 import Crypto.Hash
 import Data.List
@@ -128,8 +128,10 @@ showFileMime path =
 
 readFileHash :: FilePath -> IO (Digest MD5)
 readFileHash path = do
-    fileContent <- Data.ByteString.readFile path
-    return $ hash fileContent
+    fileContent <- BStr.readFile path
+    let h = (hashlazy fileContent) in do
+        putStrLn (path ++ ":\t" ++ (show h))
+        return h
 
 
 readFileSize :: FilePath -> IO Integer
