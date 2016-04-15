@@ -1,6 +1,8 @@
 module File where
 
+import qualified Data.ByteString
 import Control.Exception
+import Crypto.Hash
 import Data.List
 import System.Directory
 import System.FilePath
@@ -124,9 +126,10 @@ showFileMime path =
             Just m -> m
 
 
-readFileHash :: FilePath -> IO Integer
+readFileHash :: FilePath -> IO (Digest MD5)
 readFileHash path = do
-    return 0
+    fileContent <- Data.ByteString.readFile path
+    return $ hash fileContent
 
 
 readFileSize :: FilePath -> IO Integer

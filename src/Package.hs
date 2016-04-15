@@ -1,6 +1,7 @@
 module Package where
 
-
+import qualified Data.ByteString.Char8
+import Crypto.Hash
 import Data.List
 import Data.Maybe
 import System.Directory
@@ -55,7 +56,7 @@ getPkgContainers cs name = do
 data PackageFile = PackageFile {
     relativePath :: FilePath,
     fileMime :: String,
-    fileHash :: Integer,
+    fileHash :: Digest MD5,
     fileSize :: Integer,
     fileShow :: Bool
 }
@@ -64,8 +65,12 @@ instance Eq PackageFile where
     (==) a b = ((relativePath a) == (relativePath b)) && ((fileHash a) == (fileHash b))
 
 
+parseMd5 :: String -> Maybe (Digest MD5)
+parseMd5 s = digestFromByteString (Data.ByteString.Char8.pack s)
+
+
 instance Table PackageFile where
-    readLine (n:t:h:s:v:[]) = case (readMaybe h :: Maybe Integer, readMaybe s :: Maybe Integer, readMaybe v :: Maybe Bool) of
+    readLine (n:t:h:s:v:[]) = case (parseMd5 h :: Maybe (Digest MD5), readMaybe s :: Maybe Integer, readMaybe v :: Maybe Bool) of
         (Just rh, Just rs, Just rv) -> Just $ PackageFile n t rh rs rv
         otherwise -> Nothing
     readLine _ = Nothing
