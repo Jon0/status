@@ -283,7 +283,11 @@ generatePackageFile :: FilePath -> IO PackageFile
 generatePackageFile p = do
     hs <- (readFileHash p)
     sz <- (readFileSize p)
-    return $ PackageFile p (showFileMime p) hs sz True
+    case filePathMimeMaybe p of
+        Just mt -> do
+            return $ PackageFile p mt hs sz True
+        Nothing -> do
+            return $ PackageFile p [] hs sz True
 
 -- generate package data with mountpoint and subdirectory name
 generatePackage :: (FilePath, FilePath) -> IO (FilePath, Package)

@@ -5,6 +5,7 @@ import qualified Data.ByteString.Char8
 import Control.Exception
 import System.IO
 import System.Posix
+import File
 
 
 data StreamSet = StreamSet {
@@ -47,30 +48,6 @@ class (DataObject t) => DataFormat t where
 class (DataFormat t) => DataDependency d t | d -> t where
     getStream :: d -> DataStream
     getFormat :: d -> t
-
-
-printError :: IOException -> IO ()
-printError e = do
-    print e
-
-
-emptyError :: IOException -> IO [t]
-emptyError e = do
-    print e
-    return []
-
-
-nothingError :: IOException -> IO (Maybe t)
-nothingError e = do
-    print e
-    return Nothing
-
-
-contentSize :: FilePath -> IO (Maybe FileOffset)
-contentSize filename =
-    handle (nothingError) $ do
-    stat <- getFileStatus filename
-    return $ Just (fileSize stat)
 
 
 contentCreateHandle :: Integer -> FilePath -> IO (Maybe DataStream)

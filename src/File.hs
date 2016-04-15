@@ -5,9 +5,34 @@ import Data.List
 import System.Directory
 import System.FilePath
 import System.FilePath.Posix
+import System.Posix
 import System.Process
 import System.IO
 import Util
+
+
+printError :: IOException -> IO ()
+printError e = do
+    print e
+
+
+emptyError :: IOException -> IO [t]
+emptyError e = do
+    print e
+    return []
+
+
+nothingError :: IOException -> IO (Maybe t)
+nothingError e = do
+    print e
+    return Nothing
+
+
+contentSize :: FilePath -> IO (Maybe FileOffset)
+contentSize filename =
+    handle (nothingError) $ do
+    stat <- getFileStatus filename
+    return $ Just (fileSize stat)
 
 
 -- replace with unix stat type
@@ -87,6 +112,10 @@ extMimeMaybe ext =
     else Nothing
 
 
+filePathMimeMaybe :: FilePath -> Maybe String
+filePathMimeMaybe path = extMimeMaybe (takeExtension path)
+
+
 showFileMime :: FilePath -> String
 showFileMime path =
     let ext = takeExtension path in
@@ -102,8 +131,12 @@ readFileHash path = do
 
 readFileSize :: FilePath -> IO Integer
 readFileSize path = do
-    return 0
-
+    size <- contentSize path
+    case size of
+        Just s -> do
+            return $ toInteger s
+        Nothing -> do
+            return 0
 
 
 listBlockChar :: String -> String
@@ -143,14 +176,9 @@ dotDirFilter [] = False
 dotDirFilter (c:cs) = c /= '.'
 
 
-dirErrorHandler :: IOException -> IO [String]
-dirErrorHandler e = do
-    print e
-    return []
-
 showDirectory :: FilePath -> IO [FilePath]
 showDirectory path =
-    handle (dirErrorHandler) $ do
+    handle (emptyError) $ do
     content <- getDirectoryContents path
     return $ filter dotDirFilter content
 
@@ -202,12 +230,13 @@ removeAllEmptyDirectory base (p:ps) = do
     removeAllEmptyDirectory base ps
 
 
+-- no longer used
 fileErrorHandler :: IOException -> IO (String, [Handle])
 fileErrorHandler e = do
     print e
     return ("", [])
 
-
+-- no longer used
 contentHandle :: FilePath -> IO (String, [Handle])
 contentHandle filename =
     handle (fileErrorHandler) $ do
@@ -218,21 +247,13 @@ contentHandle filename =
     return (contents, [handle])
 
 
--- use contentHandle instead to close files
+-- no longer used
 fileContent :: FilePath -> IO String
 fileContent filename = do
     (c, h) <- contentHandle filename
     return c
 
 
-
-
-fileContent2 :: FilePath -> IO (Maybe String)
-fileContent2 filename = do
-    str <- bracket (openFile filename ReadMode)
-            (hClose)
-            (\hdl -> do contents <- hGetContents hdl; return contents)
-    return $ Just str
 
 
 mountDevice :: FilePath -> FilePath -> IO ()
