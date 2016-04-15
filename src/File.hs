@@ -139,6 +139,24 @@ readFileSize path = do
             return 0
 
 
+fileSizeBase :: Integer -> Integer -> String
+fileSizeBase b i =
+    if i > 1024
+    then fileSizeBase (b + 1) (div i 1024)
+    else ((show i) ++ " " ++ ext) where
+        ext = case b of
+            0 -> "Bytes"
+            1 -> "KB"
+            2 -> "MB"
+            3 -> "GB"
+            4 -> "TB"
+            otherwise -> "PB"
+
+showFileSize :: Integer -> String
+showFileSize s = fileSizeBase 0 s
+
+
+
 listBlockChar :: String -> String
 listBlockChar ('\\':'x':xs) = [(hexDigitToChar xs)]
 listBlockChar _ = ""

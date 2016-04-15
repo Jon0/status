@@ -76,7 +76,7 @@ instance Table PackageFile where
 
 
 instance Renderable (Package, PackageFile) where
-    renderAll (p, f) = [(renderableHref (relativePath f) (p, f)), (labelHtml (fileMime f)), (labelHtml (show (fileHash f))), (labelHtml (show (fileSize f)))]
+    renderAll (p, f) = [(renderableHref (relativePath f) (p, f)), (labelHtml (fileMime f)), (labelHtml (show (fileHash f))), (labelHtml (showFileSize (fileSize f)))]
     renderRow (p, f) = createDiv "pkg" (renderAll (p, f))
     staticUrl (p, f) = Just ("/pkg/" ++ (pkgName p) ++ "/" ++ (relativePath f))
 
