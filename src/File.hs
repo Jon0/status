@@ -76,14 +76,23 @@ fullWebPath d f = ((webLocation d) ++ "/" ++ (fileName f))
 
 
 
+extMimeMaybe :: String -> Maybe String
+extMimeMaybe ext =
+    if ext == ".txt" then Just "text/plain"
+    else if ext == ".svg" then Just "image/svg+xml"
+    else if ext == ".mp3" then Just "audio/mpeg"
+    else if ext == ".webm" then Just "video/webm"
+    else if ext == ".mp4" then Just "video/mp4"
+    else if ext == ".obv" then Just "video/ogg"
+    else Nothing
+
 
 showFileMime :: FilePath -> String
 showFileMime path =
     let ext = takeExtension path in
-        if ext == ".webm" then "video/webm"
-        else if ext == ".mp4" then "video/mp4"
-        else if ext == ".obv" then "video/ogg"
-        else ext
+        case extMimeMaybe ext of
+            Nothing -> ext
+            Just m -> m
 
 
 readFileHash :: FilePath -> IO Integer
