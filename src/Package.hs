@@ -1,8 +1,12 @@
 module Package where
 
-import qualified Data.ByteString as BStr
-import qualified Data.ByteString.Lazy as BStrLazy
+import Data.Byteable (toBytes)
+import Data.ByteArray.Encoding
+import qualified Data.ByteString.Base16 as B16
 import qualified Data.ByteString.Builder as BStrBuild
+import qualified Data.ByteString as BStr
+import qualified Data.ByteString.Char8 as BStrChar
+import qualified Data.ByteString.Lazy as BStrLazy
 import qualified Data.ByteString.Lazy.Char8 as BStrLazyChar
 import Crypto.Hash
 import Data.List
@@ -77,7 +81,7 @@ data DerivedFile = DerivedFile {
 
 
 parseHexStr :: String -> BStr.ByteString
-parseHexStr s = BStrLazy.toStrict (BStrBuild.toLazyByteString (BStrBuild.lazyByteStringHex (BStrLazyChar.pack s)))
+parseHexStr s = let (a, b) = (B16.decode (BStrChar.pack s)) in a
 
 
 parseMd5 :: String -> Maybe (Digest MD5)
@@ -85,7 +89,6 @@ parseMd5 s =
     case (digestFromByteString (parseHexStr s)) of
         Just h -> Just h
         Nothing -> Just $ hashlazy (BStrLazyChar.pack "")
-
 
 
 instance Table PackageFile where
