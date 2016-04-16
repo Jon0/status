@@ -67,13 +67,24 @@ data PackageFile = PackageFile {
 instance Eq PackageFile where
     (==) a b = ((relativePath a) == (relativePath b)) && ((fileHash a) == (fileHash b))
 
+-- map source file and type pairs to derived files
+data DerivedFile = DerivedFile {
+    sourcePath :: FilePath,
+    destPath :: FilePath,
+    destMime :: String,
+    destSize :: Integer
+}
+
 
 parseHexStr :: String -> BStr.ByteString
 parseHexStr s = BStrLazy.toStrict (BStrBuild.toLazyByteString (BStrBuild.lazyByteStringHex (BStrLazyChar.pack s)))
 
 
 parseMd5 :: String -> Maybe (Digest MD5)
-parseMd5 s = digestFromByteString (parseHexStr s)
+parseMd5 s =
+    case (digestFromByteString (parseHexStr s)) of
+        Just h -> Just h
+        Nothing -> Just $ hashlazy (BStrLazyChar.pack "")
 
 
 
