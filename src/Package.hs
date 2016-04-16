@@ -85,10 +85,7 @@ parseHexStr s = let (a, b) = (B16.decode (BStrChar.pack s)) in a
 
 
 parseMd5 :: String -> Maybe (Digest MD5)
-parseMd5 s =
-    case (digestFromByteString (parseHexStr s)) of
-        Just h -> Just h
-        Nothing -> Just $ hashlazy (BStrLazyChar.pack "")
+parseMd5 s = digestFromByteString (parseHexStr s)
 
 
 instance Table PackageFile where
