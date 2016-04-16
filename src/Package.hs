@@ -1,6 +1,9 @@
 module Package where
 
-import qualified Data.ByteString.Char8
+import qualified Data.ByteString as BStr
+import qualified Data.ByteString.Lazy as BStrLazy
+import qualified Data.ByteString.Builder as BStrBuild
+import qualified Data.ByteString.Lazy.Char8 as BStrLazyChar
 import Crypto.Hash
 import Data.List
 import Data.Maybe
@@ -65,8 +68,13 @@ instance Eq PackageFile where
     (==) a b = ((relativePath a) == (relativePath b)) && ((fileHash a) == (fileHash b))
 
 
+parseHexStr :: String -> BStr.ByteString
+parseHexStr s = BStrLazy.toStrict (BStrBuild.toLazyByteString (BStrBuild.lazyByteStringHex (BStrLazyChar.pack s)))
+
+
 parseMd5 :: String -> Maybe (Digest MD5)
-parseMd5 s = digestFromByteString (Data.ByteString.Char8.pack s)
+parseMd5 s = digestFromByteString (parseHexStr s)
+
 
 
 instance Table PackageFile where
