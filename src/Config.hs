@@ -32,3 +32,7 @@ argsToConfig :: [String] -> Config
 argsToConfig (dir:port:[]) = Config dir (readOrDefault port)
 argsToConfig (dir:[]) = Config dir defaultPort
 argsToConfig _ = Config defaultPath defaultPort
+
+
+databasePath :: Config -> FilePath
+databasePath cfg = ((contentPath cfg) ++ "/data")

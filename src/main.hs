@@ -14,12 +14,23 @@ clearMountDir dir = do
     removeAllEmptyDirectory (mountPointDir dir) dirs
 
 
+startServer :: Config -> IO ()
+startServer cfg = do
+    clearMountDir (contentPath cfg)
+    acceptLoop cfg (replyFn cfg)
+
+
+-- generate default database
+createDatabase :: Config -> IO ()
+createDatabase cfg = do
+    return ()
+
+
 main :: IO ()
 main = do
     args <- getArgs
     let cfg = (argsToConfig args) in do
-        clearMountDir (contentPath cfg)
-        acceptLoop cfg (replyFn cfg)
+        startServer cfg
 
 
 print_args :: IO ()
