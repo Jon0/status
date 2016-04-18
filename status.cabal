@@ -26,6 +26,7 @@ executable status
                     cryptonite,
                     directory,
                     filepath,
+                    hashable,
                     HTTP,
                     process,
                     memory,

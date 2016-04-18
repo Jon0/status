@@ -36,3 +36,6 @@ argsToConfig _ = Config defaultPath defaultPort
 
 databasePath :: Config -> FilePath
 databasePath cfg = ((contentPath cfg) ++ "/data")
+
+queuePath :: FilePath
+queuePath = "/tmp/statqueue"
