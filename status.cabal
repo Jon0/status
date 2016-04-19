@@ -31,10 +31,13 @@ executable status
                     process,
                     memory,
                     network >=2.6,
-                    sqlite,
                     unix
 
   hs-source-dirs:   src
   default-language: Haskell2010
-  default-extensions:  ExistentialQuantification, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts
+  default-extensions:   ExistentialQuantification,
+                        MultiParamTypeClasses,
+                        FunctionalDependencies,
+                        FlexibleInstances,
+                        FlexibleContexts
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
