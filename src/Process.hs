@@ -6,8 +6,12 @@ import Config
 
 data TaskModification = FilePath | Handle
 
+data TaskInput = TaskInput {
+    taskArgs :: [String]
+}
 
-data TaskResult = TaskResult {
+
+data TaskOutput = TaskOutput {
     resultModification :: [TaskModification]
 }
 
@@ -17,10 +21,10 @@ data TaskObservation = TaskObservation {
 }
 
 
--- instace of hashable?
+-- instance of hashable?
 class (Hashable t) => Task t where
     indentifier :: t -> String
-    run :: t -> TaskResult
+    run :: t -> TaskInput -> TaskOutput
     observe :: t -> TaskObservation
 
 
