@@ -107,7 +107,9 @@ instance Renderable (Package, PackageFile) where
 
 data Package = Package {
     pkgName :: String,
-    pkgFiles :: [PackageFile]
+    pkgFiles :: [PackageFile],
+    drvFiles :: [DerivedFile],
+    totalSize :: Integer
 }
 
 instance Eq Package where
@@ -195,7 +197,7 @@ strPartToPackage "" = []
 strPartToPackage str =
         let (heading, pkgs) = break (=='>') str in
             let (dirpath, name) = strPartPathName (wordDelim (==';') heading) in
-                [(dirpath, (Package name (strLinesToFiles pkgs)))]
+                [(dirpath, (Package name (strLinesToFiles pkgs) [] 0))]
 
 
 strToPackages :: String -> [(FilePath, Package)]
@@ -318,7 +320,7 @@ generatePackage :: (FilePath, FilePath) -> IO (FilePath, Package)
 generatePackage (mount, path) = do
     files <- allSubFiles (mount ++ "/" ++ path)
     pkgFiles <- mapM generatePackageFile (zipPrefix (mount ++ "/" ++ path ++ "/") files)
-    return $ (path, (Package (pathToPackageName path) pkgFiles))
+    return $ (path, (Package (pathToPackageName path) pkgFiles [] 0))
 
 
 -- one package per subdirectory
