@@ -6,3 +6,4 @@ class Serialisable t where
     -- return remaining bytes after reading the type
     -- otherwise return the input bytestring
     readObj :: ByteString -> (ByteString, Maybe t)
+    writeObj :: t -> ByteString
