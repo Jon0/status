@@ -1,5 +1,8 @@
 module Object where
 
+import Data.ByteString
+
+
 -- serialisable types from stream
 -- ensure bytestring contains at least some minimum number of bytes
 class Serialisable t where

@@ -7,6 +7,7 @@ import System.Directory
 import Content
 import File
 import Html
+import Object
 import Util
 
 
@@ -40,6 +41,7 @@ class DocNode d where
 
 
 -- Table is a subtype of DocNode
+-- is rowType serialisable?
 class (Eq rowType) => Table rowType where
     readLine :: [String] -> Maybe rowType
     showLine :: rowType -> [String]
