@@ -2,6 +2,24 @@ module Process where
 
 import Data.Hashable
 import Config
+import Http
+
+data ProcessPage = ProcessPage {
+    pids :: [Integer]
+}
+
+instance RouteType ProcessPage where
+    routeName main = "/pid"
+    routeKey main = []
+    routeMap main = RouteNode (processPageMap main)
+
+createProcessPage :: Config -> IO ProcessPage
+createProcessPage cfg = do
+    return $ ProcessPage []
+
+
+processPageMap :: ProcessPage -> String -> Maybe RouteItem
+processPageMap p s = Nothing
 
 
 data TaskModification = FilePath | Handle

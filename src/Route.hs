@@ -1,5 +1,6 @@
 module Route where
 
+import qualified Data.Map as Map
 import System.Directory
 import System.IO
 import Config
@@ -11,6 +12,7 @@ import Html
 import Http
 import List
 import Package
+import Process
 import System
 import Template
 import Util
@@ -47,12 +49,26 @@ filePageHandler base request = filePageResponse (defaultStaticPrefix base (elemO
 -- a data file containing route information
 data RouteData = RouteData { routes :: [String] }
 
+-- general route types
+mappedRoute :: Map.Map String (HttpRequest -> IO HttpResponseHandler) -> String -> Maybe RouteItem
+mappedRoute m s =
+    case Map.lookup s m of
+        Nothing -> Nothing
+        Just r -> Just $ RouteLeaf r
+
+
+renderableRoute :: (Renderable r) => r -> HttpRequest -> IO HttpResponseHandler
+renderableRoute rnd rq = do
+    return $ HttpResponseHandler (generalResponse "Todo") emptyStreamSet
+
+
 -- requires reading all files before matching routes
 data MainPage = MainPage {
     mainItems :: [String],
     srvDir :: FilePath,
     devPage :: DevicePage,
-    pkgPage :: PackagePage
+    pkgPage :: PackagePage,
+    pidPage :: ProcessPage
 }
 
 instance RouteType MainPage where
@@ -65,7 +81,8 @@ createMainPage :: Config -> IO MainPage
 createMainPage cfg = do
     devp <- createDevicePage cfg
     pkgp <- createPackagePage cfg
-    return $ MainPage [] (contentPath cfg) devp pkgp
+    pidp <- createProcessPage cfg
+    return $ MainPage [] (contentPath cfg) devp pkgp pidp
 
 
 mainPageHandler :: HttpRequest -> IO HttpResponseHandler
@@ -80,6 +97,7 @@ mainPageMap m path
     | path == "" = Just $ RouteLeaf mainPageHandler
     | path == "dev" = Just $ routeMap (devPage m)
     | path == "pkg" = Just $ routeMap (pkgPage m)
+    | path == "pid" = Just $ routeMap (pidPage m)
     | path == "swc" = Just $ RouteLeaf (filePageHandler (srvDir m))
     | otherwise = Just $ RouteLeaf debugPageHandler
 

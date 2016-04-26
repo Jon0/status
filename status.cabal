@@ -23,6 +23,7 @@ executable status
                     byteable,
                     bytestring,
                     base16-bytestring,
+                    containers >=0.5,
                     cryptonite,
                     directory,
                     filepath,
