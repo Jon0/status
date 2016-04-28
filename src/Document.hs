@@ -22,10 +22,6 @@ class Renderable r where
     staticUrl :: r -> Maybe String
 
 
-class Templatable t where
-    tmplResponder :: (Renderable r) => t -> r -> HttpRequest -> IO HttpResponseHandler
-
-
 renderableHref :: (Renderable r) => String -> r -> HtmlContent
 renderableHref label rd =
     case (staticUrl rd) of

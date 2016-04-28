@@ -1,7 +1,14 @@
 module Template where
 
+import Document
 import File
 import Html
+import Http
+
+
+-- defualt page rendering
+class Templatable t where
+    tmplResponder :: (Renderable r) => t -> r -> HttpRequest -> IO HttpResponseHandler
 
 
 dirStatusView :: DirectoryUrl -> [HtmlContent]
@@ -10,7 +17,6 @@ dirStatusView d = [title, br, mount, br, items] where
     mount = createLabel ("Location: " ++ (duMount d))
     br = createBreak
     items = generalForm "" [(generalButton "Sort" "sort" "1")]
-
 
 
 statToTableRow :: DirectoryUrl -> FileStat -> [HtmlContent]
