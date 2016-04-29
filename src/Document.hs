@@ -40,6 +40,11 @@ class DocNode d where
     createHtml :: d -> DocStyle -> IO HtmlContent
 
 
+class Splitable t where
+    split :: t -> [String]
+    join :: [String] -> t
+
+
 -- Table is a subtype of DocNode
 -- is rowType serialisable?
 class (Eq rowType) => Table rowType where
