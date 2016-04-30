@@ -279,11 +279,12 @@ fileContent filename = do
 
 
 
-mountDevice :: FilePath -> FilePath -> IO ()
-mountDevice dev path = do
+mountDevice :: FilePath -> FilePath -> Bool -> IO ()
+mountDevice dev path writable = do
     tryCommand ("mkdir " ++ path)
-    tryCommand ("mount " ++ dev ++ " " ++ path)
-
+    if writable
+    then tryCommand ("mount -o rw " ++ dev ++ " " ++ path)
+    else tryCommand ("mount -o ro " ++ dev ++ " " ++ path)
 
 umountDevice :: FilePath -> IO ()
 umountDevice path = do

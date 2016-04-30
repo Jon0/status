@@ -131,9 +131,9 @@ queryAction :: Partition -> FilePath -> String -> IO ()
 queryAction dev dir query =
     if (length query) > 0
     then
-        if (last query) == '1'
+        if (last query) == 'o'
         then do
-            mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev)
+            mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev) False
         else do
             umountDevice (defaultMountPoint dir dev)
     else do
