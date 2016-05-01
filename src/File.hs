@@ -5,6 +5,7 @@ import Control.Exception
 import Crypto.Hash
 import Data.List
 import System.Directory
+import System.Exit
 import System.FilePath
 import System.FilePath.Posix
 import System.Posix
@@ -181,12 +182,13 @@ listBlock items = do
 
 
 -- command line actions
-tryCommand :: String -> IO ()
+tryCommand :: String -> IO ExitCode
 tryCommand cmd = do
     putStrLn cmd
     ps <- runCommand cmd
     code <- waitForProcess ps
     putStrLn $ show code
+    return code
 
 
 -- return hostname
@@ -240,9 +242,10 @@ allSubFiles path = do
 
 
 -- only remove empty directories
-removeEmptyDirectory :: FilePath -> IO ()
+removeEmptyDirectory :: FilePath -> IO ExitCode
 removeEmptyDirectory path = do
-    tryCommand ("rmdir " ++ path)
+    e <- tryCommand ("rmdir " ++ path)
+    return e
 
 
 removeAllEmptyDirectory :: FilePath -> [FilePath] -> IO ()
@@ -279,17 +282,31 @@ fileContent filename = do
 
 
 
-mountDevice :: FilePath -> FilePath -> Bool -> IO ()
+mountDevice :: FilePath -> FilePath -> Bool -> IO ExitCode
 mountDevice dev path writable = do
-    tryCommand ("mkdir " ++ path)
-    if writable
-    then tryCommand ("mount -o rw " ++ dev ++ " " ++ path)
-    else tryCommand ("mount -o ro " ++ dev ++ " " ++ path)
+    e1 <- tryCommand ("mkdir " ++ path)
+    case e1 of
+        ExitSuccess -> do
+            if writable
+            then do
+                e2 <- tryCommand ("mount -o rw " ++ dev ++ " " ++ path)
+                return e2
+            else do
+                e2 <- tryCommand ("mount -o ro " ++ dev ++ " " ++ path)
+                return e2
+        ExitFailure a -> do
+            return e1
 
-umountDevice :: FilePath -> IO ()
+
+umountDevice :: FilePath -> IO ExitCode
 umountDevice path = do
-    tryCommand ("umount " ++ path)
-    removeEmptyDirectory path
+    e <- tryCommand ("umount " ++ path)
+    case e of
+        ExitSuccess -> do
+            removeEmptyDirectory path
+            return e
+        ExitFailure a -> do
+            return e
 
 
 -- path to content files

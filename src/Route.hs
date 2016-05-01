@@ -133,9 +133,11 @@ queryAction dev dir query =
     then
         if (last query) == 'o'
         then do
-            mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev) False
+            e <- mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev) False
+            print $ show e
         else do
-            umountDevice (defaultMountPoint dir dev)
+            e <- umountDevice (defaultMountPoint dir dev)
+            print $ show e
     else do
         return ()
 
