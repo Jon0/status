@@ -280,8 +280,6 @@ fileContent filename = do
     return c
 
 
-
-
 mountDevice :: FilePath -> FilePath -> Bool -> IO ExitCode
 mountDevice dev path writable = do
     e1 <- tryCommand ("mkdir " ++ path)

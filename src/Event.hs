@@ -5,3 +5,7 @@ class Input i where
 
 class Output o where
     send :: o -> IO ()
+
+class (Input d, Output d) => IODevice d where
+    source :: d -> [Input d]
+    dest :: d -> [Output d]
