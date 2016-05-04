@@ -181,6 +181,12 @@ listBlock items = do
     return $ map2D listBlockReplace (map allWords (lines result))
 
 
+listCpu :: IO [[String]]
+listCpu = do
+    result <- readProcess "lscpu" ["-p"] ""
+    return $ map (wordDelim (==',')) (lines result)
+
+
 -- command line actions
 tryCommand :: String -> IO ExitCode
 tryCommand cmd = do
