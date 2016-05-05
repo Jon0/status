@@ -12,6 +12,19 @@ import Util
 
 
 -- http types
+type HttpKey = String
+type HttpValue = String
+
+data HttpPair = HttpPair {
+    httpKey :: HttpKey,
+    httpVal :: HttpValue
+}
+
+-- implement serialisable
+instance Show HttpPair where
+    show (HttpPair k v) = (k ++ ": " ++ v)
+
+
 data HttpVerb =
     HttpGet
     | HttpPost
@@ -25,7 +38,8 @@ data HttpRequest = HttpRequest {
 }
 
 data HttpResponse = HttpResponse {
-    header :: [String],
+    httpCode :: Integer,
+    header :: [HttpPair],
     content :: StreamTransfer
 }
 
@@ -118,7 +132,7 @@ breakRequest req index = ((absolutePath (take index str)), (absolutePath (drop i
     str = (urlSplit req)
 
 
-codeName :: Int -> String
+codeName :: Integer -> String
 codeName code =
     case code of
         200 -> "OK"
@@ -127,7 +141,7 @@ codeName code =
         otherwise -> "Unknown"
 
 -- create the first header response line
-makeResponseLine :: Int -> String
+makeResponseLine :: Integer -> String
 makeResponseLine code = ("HTTP/1.1 " ++ (show code) ++ " " ++ (codeName code))
 
 
@@ -138,32 +152,34 @@ generalResponse :: String -> HttpResponse
 generalResponse content = streamResponse (createStringTransfer content)
 
 
-maybeHeaderElement :: (Show t) => String -> Maybe t -> [String]
+maybeHeaderElement :: (Show t) => String -> Maybe t -> Maybe HttpPair
 maybeHeaderElement label mb =
     case mb of
-        Nothing -> []
-        Just obj -> [(label ++ ": " ++ (show obj))]
+        Nothing -> Nothing
+        Just obj -> Just $ HttpPair label (show obj)
 
 
-streamResponseLength :: StreamTransfer -> [String]
+streamResponseLength :: StreamTransfer -> Maybe HttpPair
 streamResponseLength content =
     maybeHeaderElement "Content-Length" (transferLength content)
 
 
-streamResponseType :: StreamTransfer -> [String]
+streamResponseType :: StreamTransfer -> Maybe HttpPair
 streamResponseType content =
     maybeHeaderElement "Content-Type" (transferMimeType content)
 
 
-
 streamResponse :: StreamTransfer -> HttpResponse
-streamResponse c = (HttpResponse h c) where
-    h = [(makeResponseLine 200)] ++ (streamResponseLength c) ++ (streamResponseType c)
+streamResponse c = (HttpResponse 200 h c) where
+    h = mapFnMaybe [streamResponseLength, streamResponseType] c
 
+
+headerFromPairs :: [(StreamTransfer -> HttpPair)] -> StreamTransfer -> [HttpPair]
+headerFromPairs fns str = mapFn fns str
 
 
 responseHeadString :: HttpResponse -> String
-responseHeadString r = ((intercalate "\n" (header r)) ++ "\n\n")
+responseHeadString r = ((makeResponseLine (httpCode r)) ++ (intercalate "\n" (map show (header r))) ++ "\n\n")
 
 
 sendAllResponse :: Handle -> HttpResponse -> IO ()

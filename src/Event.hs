@@ -9,3 +9,6 @@ class Output o where
 class (Input d, Output d) => IODevice d where
     source :: d -> [Input d]
     dest :: d -> [Output d]
+
+class Test t where
+    apply :: a -> t a

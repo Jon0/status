@@ -204,6 +204,10 @@ createDiv c e = HtmlContent (HtmlDiv c e)
 
 
 -- general functions
+simpleRow :: (Show a) => [a] -> HtmlContent
+simpleRow x = createHtmlTable [(map (labelHtml . show) x)]
+
+
 labelHtml :: String -> HtmlContent
 labelHtml s = createLabel s
 

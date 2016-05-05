@@ -1,25 +1,42 @@
 module Process where
 
 import Data.Hashable
+import File
 import Config
+import Content
+import Html
 import Http
+import Util
+
 
 data ProcessPage = ProcessPage {
+    attrs :: [String],
     pids :: [Integer]
 }
+
 
 instance RouteType ProcessPage where
     routeName main = "/pid"
     routeKey main = []
     routeMap main = RouteNode (processPageMap main)
 
+
 createProcessPage :: Config -> IO ProcessPage
 createProcessPage cfg = do
-    return $ ProcessPage []
+    attrs <- showDirectory "/proc/self"
+    return $ ProcessPage attrs []
 
 
 processPageMap :: ProcessPage -> String -> Maybe RouteItem
-processPageMap p s = Nothing
+processPageMap p s =
+    case findElement (== s) (attrs p) of
+        Nothing -> Nothing
+        Just e -> Just $ RouteLeaf (processPageHandler p)
+
+
+processPageHandler :: ProcessPage -> HttpRequest -> IO HttpResponseHandler
+processPageHandler p request = do
+    return $ HttpResponseHandler (generalResponse (toHtml (simpleRow (attrs p)))) emptyStreamSet
 
 
 data TaskModification = FilePath | Handle

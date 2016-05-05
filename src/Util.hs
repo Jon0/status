@@ -66,6 +66,21 @@ prefixSet _ [] = []
 prefixSet item (x:xs) = (item ++ x) : (prefixSet item xs)
 
 
+-- map using many functions to one value
+mapFn :: [a -> b] -> a -> [b]
+mapFn [] _ = []
+mapFn (f:fs) x = (f x) : (mapFn fs x)
+
+
+mapFnMaybe :: [a -> Maybe b] -> a -> [b]
+mapFnMaybe [] _ = []
+mapFnMaybe (f:fs) x =
+    case (f x) of
+        Nothing -> (mapFnMaybe fs x)
+        Just y -> y : (mapFnMaybe fs x)
+
+
+
 elemOrEmpty :: Int -> [[a]] -> [a]
 elemOrEmpty e s =
     if 0 <= e && e < length s
