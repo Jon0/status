@@ -1,12 +1,28 @@
 module Server where
 
 import Control.Concurrent
+import Control.Concurrent.Chan
+import qualified Data.ByteString as BStr
 import System.IO
 import Network.Socket
 import Config
 
+
+data ProcStream = ProcStream {
+    procThread :: ThreadId,
+    procResult :: Chan BStr.ByteString
+}
+
+
+forkStream :: (Chan BStr.ByteString -> IO ()) -> IO ProcStream
+forkStream handler = do
+    chan <- newChan
+    pid <- forkIO (handler chan)
+    return $ ProcStream pid chan
+
+
 -- a set of open connections
-data SocketSet = SocketSet { socketHandles :: [Handle] }
+data SocketSet = SocketSet { socketHandles :: [ProcStream] }
 
 
 -- socket to listen on a port
@@ -42,7 +58,7 @@ respond2 (sock, _) = do
 
 
 -- opens port 8080 and applies handler to recieved connections
-acceptLoop :: Config -> (Handle -> IO ()) -> IO ()
-acceptLoop cfg handler = do
-    sock <- openSocket (hostPort cfg)
+acceptLoop :: (Handle -> IO ()) -> PortNumber -> IO ()
+acceptLoop handler port = do
+    sock <- openSocket port
     mainLoop handler sock

@@ -18,7 +18,7 @@ clearMountDir dir = do
 startServer :: Config -> IO ()
 startServer cfg = do
     clearMountDir (contentPath cfg)
-    acceptLoop cfg (replyFn cfg)
+    acceptLoop (replyFn cfg) (hostPort cfg)
 
 
 -- generate default database
