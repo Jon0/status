@@ -34,6 +34,10 @@ data StreamTransfer = StreamTransfer {
     transferFn :: Int -> IO (Data.ByteString.ByteString, Bool)
 }
 
+
+type StreamFragment = (Data.ByteString.ByteString, Bool)
+
+
 -- serialisable types
 class DataObject t where
     showObject :: t -> String
@@ -98,14 +102,14 @@ contentCloseAll set = do
 
 
 
-readSomeError :: IOException -> IO (Data.ByteString.ByteString, Bool)
+readSomeError :: IOException -> IO StreamFragment
 readSomeError e = do
     print e
     return (Data.ByteString.empty, True)
 
 
 -- read some bytes from handle
-readSomeStream :: DataStream -> Int -> IO (Data.ByteString.ByteString, Bool)
+readSomeStream :: DataStream -> Int -> IO StreamFragment
 readSomeStream _ 0 = do
     return (Data.ByteString.empty, False)
 readSomeStream stream chars =
@@ -119,7 +123,7 @@ createStreamTransfer s t = StreamTransfer (dataLength s) Nothing (readSomeStream
 
 
 
-readSomeString :: String -> Int -> IO (Data.ByteString.ByteString, Bool)
+readSomeString :: String -> Int -> IO StreamFragment
 readSomeString str chars = do
     return ((Data.ByteString.Char8.pack str), True)
 
