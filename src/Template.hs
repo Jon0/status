@@ -61,7 +61,7 @@ generalTextFeild label name = [(createLabel label), (createInput [("type", "text
 
 
 mountDeviceForm :: HtmlContent
-mountDeviceForm = generalForm "" [(generalButton "Unmount" "mount" "u"), (generalButton "Mount" "mount" "ro")]
+mountDeviceForm = generalForm "" [(generalButton "Unmount" "mount" "u"), (generalButton "Mount" "mount" "rw")]
 
 
 fileUploadForm :: HtmlContent

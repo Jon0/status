@@ -135,6 +135,10 @@ queryAction dev dir query =
         then do
             e <- mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev) False
             print $ show e
+        else if (last query) == 'w'
+            then do
+                e <- mountDevice ("/dev/" ++ (strId dev)) (defaultMountPoint dir dev) True
+                print $ show e
         else do
             e <- umountDevice (defaultMountPoint dir dev)
             print $ show e
