@@ -4,6 +4,7 @@ import Data.Hashable
 import File
 import Config
 import Content
+import Document
 import Html
 import Http
 import Util
@@ -21,6 +22,12 @@ instance RouteType ProcessPage where
     routeMap main = RouteNode (processPageMap main)
 
 
+instance Renderable ProcessPage where
+    renderAll p = [(renderRow p)]
+    renderRow p = simpleRow (attrs p)
+    staticUrl p = Nothing
+
+
 createProcessPage :: Config -> IO ProcessPage
 createProcessPage cfg = do
     attrs <- showDirectory "/proc/self"
@@ -36,7 +43,7 @@ processPageMap p s =
 
 processPageHandler :: ProcessPage -> HttpRequest -> IO HttpResponseHandler
 processPageHandler p request = do
-    return $ HttpResponseHandler (generalResponse (toHtml (simpleRow (attrs p)))) emptyStreamSet
+    return $ HttpResponseHandler (generalResponse (toHtml (renderRow p))) emptyStreamSet
 
 
 data TaskModification = FilePath | Handle
