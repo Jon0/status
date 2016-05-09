@@ -24,7 +24,7 @@ instance RouteType ProcessPage where
 
 instance Renderable ProcessPage where
     renderAll p = [(renderRow p)]
-    renderRow p = simpleRow (attrs p)
+    renderRow p = simpleRow ("attrs" : (attrs p))
     staticUrl p = Nothing
 
 
