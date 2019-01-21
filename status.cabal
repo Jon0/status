@@ -32,7 +32,6 @@ executable status
                     memory,
                     network >=2.6,
                     process,
-                    sqlite-simple,
                     unix
 
   hs-source-dirs:   src
